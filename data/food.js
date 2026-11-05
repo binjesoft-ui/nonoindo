@@ -62,5 +62,9 @@
       caption:'Wijennya nempel di baju, tapi tetep aja nambah satu.',
       pal:{ O:'#D98E2B', D:'#A85F16', S:'#FBEFC8', G:'#3E8E41', L:'#6DB36A' },
       art:[".....DOOOD.....","....OSOOSOO....","...OOOOSOOSO...","...OSOOOOOOD...","...DOOSOSOD....","....DDOODD.....","...OOOD.OOOOD..","..OSOOSO.OSOOO.",".OOOOOOOD.OOSOD",".OSOSOOOD.OSOOD",".OOOOOSOD.OOOSD",".DOSOOOD..DOSD.","..DDOOD....DD..","LLLLLLLLLLLLLLL","..GGGGGGGGGGG.."] },
+    { id:'es-cendol', name:'Es Cendol', bg:'#F6D9B8',
+      caption:'Si ijo kenyal berenang di santan, panas siang langsung kalah.',
+      pal:{ R:'#D3261E', I:'#CFE8F2', W:'#FBF6E6', G:'#3FA34D', B:'#6B3A17' },
+      art:[".........RR....","........RR.....",".......RR......",".IIIIIIRIIIIII.",".IWWIWWRWWIWWI.","..WGWWGRGWWGW..","..GWGGWGWGGWG..","..WGWGGWGGWGW..","..GGWGWGWGWGG..","...GWGGWGGWG...","...BGBGBGBGB...","...BBBBBBBBB...","....BBBBBBB....","....IIIIIII....",".....IIIII....."] },
   ],
 });

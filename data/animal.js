@@ -25,5 +25,9 @@
       caption:'Rambut oranye alami, seumur hidup nggak pernah ke salon.',
       pal:{ O:'#C2551A', D:'#5A2E14', K:'#1E1410', T:'#D9A878', B:'#7A5230' },
       art:["BBBBBBBBBBBBBBB","..OO.......OO..","..OO.......OO..","..OO.......OO..","..OOO.....OOO..","...OOOOOOOOO...","...OODDDDDOO...","..OODTKTKTDOO..","..ODDTTTTTDDO..","..ODTTTTTTTDO..","..ODTKKKKKTDO..","...ODDTTTDDO...","...OOOOOOOOO...","....OOO.OOO....","...OOO...OOO..."] },
+    { id:'komodo', name:'Komodo', bg:'#CDE7DA',
+      caption:'Kadal level bos, disapa dari jauh aja udah cukup.',
+      pal:{ T:'#D9BE82', G:'#5C6B3A', D:'#3B4526', K:'#141414', R:'#D3261E', Y:'#E3DCC2' },
+      art:["...............","...............","...............","............GG.",".......GGGGGGKG","....GGGGDGGGGGG","..GGGDGGGGDGGRR",".GGGGGGGGGGGG.R","GGG.GGG...GGG..","G..GGG...GGG...","G..Y.Y...Y.Y...","GG.TTTTTTTTTTTT",".GGGGGGTTTTTTTT","TTTT.TTTTTT.TTT","TTTTTTTTTTTTTTT"] },
   ],
 });

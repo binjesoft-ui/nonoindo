@@ -49,5 +49,13 @@
       caption:'Rumah panjang, sekampung kumpul tanpa perlu grup chat.',
       pal:{ D:'#2A1A12', K:'#6B3A1E', R:'#C8321E', Y:'#F0C030', G:'#5B8C3A' },
       art:["...............","D.............D","DD...........DD",".KKKKKKKKKKKKK.","KKKKKKKKKKKKKKK","DDDDDDDDDDDDDDD",".YRYDRYRDYRYDR.",".RDRYDDDYRDRYD.",".YRYDRYRDYRYDR.",".DDDDDDDDDDDDD.","...............",".K..K..K..K..K.",".K..K..K..K..K.",".K..K..K..K..K.","GGGGGGGGGGGGGGG"] },
+    { id:'pura-ulun-danu', name:'Pura Ulun Danu', bg:'#BFE3EE',
+      caption:'Cakepnya kebangetan, danaunya aja betah jadi cermin.',
+      pal:{ Y:'#E8B923', D:'#2B2B2B', B:'#7A4A25', W:'#2F7FB5', S:'#A59A86' },
+      art:[".......Y.......","......DDD......","......BBB......",".....DDDDD.....","......BBB......","....DDDDDDD....","......BBB......","...DDDDDDDDD...","......BBB......","..DDDDDDDDDDD..",".....BBBBB.....",".....BBBBB.....","..SSSSSSSSSSS..",".WW.WWWWW.WW.WW","WWWWWWWWWWWWWWW"] },
+    { id:'candi-bentar', name:'Candi Bentar', bg:'#FAD7A0',
+      caption:'Gerbangnya kebelah dua, tapi yang lewat malah makin adem.',
+      pal:{ B:'#8C8074', R:'#B5522C', G:'#5E6B4E' },
+      art:[".....B...B.....",".....B...B.....","....BB...BB....","...RBB...BBR...","...BBB...BBB...","..BBRB...BRBB..","..BBBB...BBBB..",".BBRRB...BRRBB.",".BBBBB...BBBBB.",".RRRRB...BRRRR.",".BBBBB...BBBBB.",".BBBBB...BBBBB.","GGGGGG...GGGGGG","GGGGGGG.GGGGGGG","GGGGGGGGGGGGGGG"] },
   ],
 });

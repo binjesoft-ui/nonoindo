@@ -21,5 +21,9 @@
       caption:'Kecil-kecil gini, sinyal di tengah sungai tetap ilang.',
       pal:{ B:'#8A5A2B', D:'#54341A', R:'#C8321E', W:'#2F86B5', P:'#6B4A22', Y:'#E8C24A', S:'#C98E5C' },
       art:["...............",".....Y.........","....YYY........","...YYYYY....PPP","..YYYYYYY...PP.",".....S......P..","....RRRSSSSP...","....RRR...P....","B...RRR..P....B","BBB.RRR.P...BBB",".BBBBBBBBBBBBB.",".DDDDDDDDDDDDD.","..BBBBBBBBBBB..","...DDDDDDDDD...",".WW.WWW.WWW.WW."] },
+    { id:'bajaj', name:'Bajaj', bg:'#CFE6F5',
+      caption:'Mau belok ke mana, cuma abangnya yang tahu.',
+      pal:{ O:'#E06A1B', K:'#222222', G:'#B9B9B9', W:'#F2E36B' },
+      art:["...KKKKKKKKK...","..OOOOOOOOOOO..",".OO.........OO.",".O...........O.",".O...........O.",".O..KKKKKKK..O.",".O.....K.....O.",".OOOOOOOOOOOOO.",".OOOOOOOOOOOOO.",".KOOOOWWWOOOOK.",".K.OOOWWWOOO.K.",".K..OOOOOOO..K.","......KKK......","......KGK......","......KKK......"] },
   ],
 });
