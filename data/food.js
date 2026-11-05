@@ -54,5 +54,9 @@
       caption:'Satu buat tes rasa, lima buat tes iman.',
       pal:{ Y:'#F2B632', O:'#C97A1E', D:'#7E4413', W:'#FBF3DE', G:'#4E9A34', P:'#FBE8A0' },
       art:["...............","...............","....OOOOOOO....","..OOYDYYYDYOO..",".OYYPPPPPPPYYO.",".OYDYYYDYYYDYO.","..OOYYYYYDOOO..","...DOOOOOOOD...",".OOYYO...OYYOO.","OYDPPYO.OYPPDYO","OYYPPYDYDYPPYYO",".OYYDYO.OYDYYO.","..DOOOD.DOOOD..","GGGGGGGGGGGGGGG",".WWWWWWWWWWWWW."] },
+    { id:'klepon', name:'Klepon', bg:'#F3C9A0',
+      caption:'Gigit pelan-pelan, gula merahnya suka nyerang baju.',
+      pal:{ G:'#3F9B3F', W:'#FFFDF2', L:'#2E7D32', D:'#1B5120', B:'#6B3A17' },
+      art:[".....WWWWW.....","....WGWGWGW....","...GGGWGGGGG...","...GGGGGGGGG...","...GGGGGBGGG...","....GGGBGGG....",".....GGGGG.....","..WWW.....WWW..",".WGWGW...WGWGW.","GGWGGGG.GGGGWGG","GGGGGGG.GGGGGGG","GGBGGGG.GGGGBGG",".GGGGG...GGGGG.","..GGG.....GGG..","LLLLLLLLLLLLLLL"] },
   ],
 });

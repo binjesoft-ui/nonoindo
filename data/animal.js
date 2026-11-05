@@ -13,5 +13,13 @@
       caption:'Jalannya pelan, tapi rumahnya sudah lunas.',
       pal:{ G:'#3E8E41', L:'#A6CF5B', S:'#6E9B4A', D:'#22331A' },
       art:["...SSSS...","...DSSD...",".S.GGGG.S.","SSGGLLGGSS","..GLGGLG..","..GLGGLG..","SSGGLLGGSS",".S.GGGG.S.","....SS....","....S....."] },
+    { id:'ikan-koi', name:'Ikan Koi', bg:'#1C6E8C',
+      caption:'Dikasih makan dikit, kolam langsung rame kayak diskon.',
+      pal:{ W:'#FBF5E6', R:'#E2502A', O:'#F29A3A', K:'#222222' },
+      art:["..........","...WRR....","..WRRRWW.O",".WWWRRRWOO","WKWWWRRRWO","WWWRRWWWOO",".WWRRRWWOO","..WWWWRW.O","...OO.....",".........."] },
+    { id:'ayam-jago', name:'Ayam Jago', bg:'#BFE3F0',
+      caption:'Alarm gratis, sayangnya nggak ada tombol snooze.',
+      pal:{ R:'#D3261E', O:'#D9791F', Y:'#F2B632', K:'#1E1E1E', D:'#20382E', G:'#2F8F5B', B:'#8A3F16' },
+      art:[".DG...RR..","DG.D..RRR.","G.DG.OOOO.","D.GD.OKOYY","DGDGOOOR..",".DGBOOOR..",".DBBBOO...","..OBBOO...","...Y.Y....","..YY.YY..."] },
   ],
 });

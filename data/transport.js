@@ -13,5 +13,9 @@
       caption:'Tua-tua begini, boncengannya sudah angkut tiga generasi.',
       pal:{ K:'#2B2B2B', R:'#8E2C20', D:'#5B3A1E', S:'#9EA3A8' },
       art:[".......RR.",".DDD...R..","..R....R..","..RRRRRR..","...R...R..","...R..R.R.",".KK.RR.KK.","K..KR.K.RK","K..K..K..K",".KK....KK."] },
+    { id:'delman', name:'Delman', bg:'#BEE3D4',
+      caption:'Kudanya yang kerja, kita yang sibuk foto-foto.',
+      pal:{ B:'#8A5128', D:'#3A2212', R:'#C8352B', Y:'#F2C14E', K:'#222222' },
+      art:["...............",".DD............",".BBD.....RRRRRR","BBBBD....R....R","BKBBD....R....R","..BBB....R....R","...BBBBBYYYYYYY","...BBBBBBYYYYYY","...BBBBBD.DDD..","...BB.BB.DD.DD.","...B...B.D.Y.D.","...B...B.DYYYD.","...B...B.D.Y.D.","...DD..DDDD.DD.",".........DDD..."] },
   ],
 });

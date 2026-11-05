@@ -33,5 +33,13 @@
       caption:'Atapnya kayak perahu, mudik ke Toraja berasa mau berlayar.',
       pal:{ K:'#2A211C', R:'#A92B23', Y:'#E6B422', W:'#F4EEDD', B:'#6B3F1D' },
       art:["KK...........KK",".KKK.......KKK.",".KKKKK...KKKKK.","..KKKKKKKKKKK..","...KKKKKKKKK...","....YRWRWRY....","...RRYRYRYRR...","...RWRRRRRWR...","...RRYRWRYRR...","...YYYYYYYYY...","....B.B.B.B....","....B.B.B.B....","....BBBBBBB....","....B.B.B.B....","...KK.K.K.KK..."] },
+    { id:'borobudur', name:'Borobudur', bg:'#F4A460',
+      caption:'Naik tangganya pegel, tapi pemandangannya bikin lupa capek.',
+      pal:{ G:'#8B8378', D:'#5C554B', K:'#3F3A33', L:'#D9D2C2' },
+      art:[".......K.......",".......G.......","......GGG......",".....GGGGG.....","...G.GGGGG.G...","..GGGDDDDDGGG..","..G.G.G.G.G.G..",".GGGGGGGGGGGGG.",".DGDGDGDGDGDGD.",".GGGGGGGGGGGGG.","GDGDGDGLGDGDGDG","GGGGGGGLGGGGGGG","DDDDDDDLDDDDDDD","GGGGGGGLGGGGGGG","GGGGGGGLGGGGGGG"] },
+    { id:'joglo', name:'Joglo', bg:'#CFE8D5',
+      caption:'Atapnya tinggi, ademnya bikin tamu lupa pulang.',
+      pal:{ D:'#4A2A16', R:'#A5482A', B:'#7A4A21', T:'#C99A52', F:'#8C8275' },
+      art:["...............",".......D.......","......DDD......",".....DRRRD.....","....DRRRRRD....","...BBBBBBBBB...",".DDRRRRRRRRRDD.","DDRRRRRRRRRRRDD","BBBBBBBBBBBBBBB",".T..T..T..T..T.",".T..T.TTT.T..T.",".T..T.T.T.T..T.",".T..T.T.T.T..T.","FFFFFFFFFFFFFFF","..............."] },
   ],
 });
