@@ -58,5 +58,9 @@
       caption:'Gigit pelan-pelan, gula merahnya suka nyerang baju.',
       pal:{ G:'#3F9B3F', W:'#FFFDF2', L:'#2E7D32', D:'#1B5120', B:'#6B3A17' },
       art:[".....WWWWW.....","....WGWGWGW....","...GGGWGGGGG...","...GGGGGGGGG...","...GGGGGBGGG...","....GGGBGGG....",".....GGGGG.....","..WWW.....WWW..",".WGWGW...WGWGW.","GGWGGGG.GGGGWGG","GGGGGGG.GGGGGGG","GGBGGGG.GGGGBGG",".GGGGG...GGGGG.","..GGG.....GGG..","LLLLLLLLLLLLLLL"] },
+    { id:'onde-onde', name:'Onde-Onde', bg:'#CFE8D0',
+      caption:'Wijennya nempel di baju, tapi tetep aja nambah satu.',
+      pal:{ O:'#D98E2B', D:'#A85F16', S:'#FBEFC8', G:'#3E8E41', L:'#6DB36A' },
+      art:[".....DOOOD.....","....OSOOSOO....","...OOOOSOOSO...","...OSOOOOOOD...","...DOOSOSOD....","....DDOODD.....","...OOOD.OOOOD..","..OSOOSO.OSOOO.",".OOOOOOOD.OOSOD",".OSOSOOOD.OSOOD",".OOOOOSOD.OOOSD",".DOSOOOD..DOSD.","..DDOOD....DD..","LLLLLLLLLLLLLLL","..GGGGGGGGGGG.."] },
   ],
 });

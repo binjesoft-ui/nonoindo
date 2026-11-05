@@ -41,5 +41,13 @@
       caption:'Atapnya tinggi, ademnya bikin tamu lupa pulang.',
       pal:{ D:'#4A2A16', R:'#A5482A', B:'#7A4A21', T:'#C99A52', F:'#8C8275' },
       art:["...............",".......D.......","......DDD......",".....DRRRD.....","....DRRRRRD....","...BBBBBBBBB...",".DDRRRRRRRRRDD.","DDRRRRRRRRRRRDD","BBBBBBBBBBBBBBB",".T..T..T..T..T.",".T..T.TTT.T..T.",".T..T.T.T.T..T.",".T..T.T.T.T..T.","FFFFFFFFFFFFFFF","..............."] },
+    { id:'prambanan', name:'Prambanan', bg:'#F6D9A8',
+      caption:'Seribu candi semalam? Proyek lembur paling legendaris.',
+      pal:{ S:'#6E6A66', L:'#9C968E', D:'#2F2B28' },
+      art:[".......S.......",".......S.......","......SLS......","......LLL......","..S..SSLSS..S..","..L...LDL...L..",".SLS.SSLSS.SLS.",".LDL..LDL..LDL.","SSLSSSSLSSSSLSS",".LLL.LLDLL.LLL.","SSLSSSLDLSSSLSS",".LDLLLDDDLLLDL.",".LDLLLDDDLLLDL.","SSSSSSDDDSSSSSS","LLLLLLLLLLLLLLL"] },
+    { id:'rumah-lamin', name:'Rumah Lamin', bg:'#CDEBD8',
+      caption:'Rumah panjang, sekampung kumpul tanpa perlu grup chat.',
+      pal:{ D:'#2A1A12', K:'#6B3A1E', R:'#C8321E', Y:'#F0C030', G:'#5B8C3A' },
+      art:["...............","D.............D","DD...........DD",".KKKKKKKKKKKKK.","KKKKKKKKKKKKKKK","DDDDDDDDDDDDDDD",".YRYDRYRDYRYDR.",".RDRYDDDYRDRYD.",".YRYDRYRDYRYDR.",".DDDDDDDDDDDDD.","...............",".K..K..K..K..K.",".K..K..K..K..K.",".K..K..K..K..K.","GGGGGGGGGGGGGGG"] },
   ],
 });

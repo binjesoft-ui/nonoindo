@@ -21,5 +21,9 @@
       caption:'Alarm gratis, sayangnya nggak ada tombol snooze.',
       pal:{ R:'#D3261E', O:'#D9791F', Y:'#F2B632', K:'#1E1E1E', D:'#20382E', G:'#2F8F5B', B:'#8A3F16' },
       art:[".DG...RR..","DG.D..RRR.","G.DG.OOOO.","D.GD.OKOYY","DGDGOOOR..",".DGBOOOR..",".DBBBOO...","..OBBOO...","...Y.Y....","..YY.YY..."] },
+    { id:'orangutan', name:'Orangutan', bg:'#CFE8B8',
+      caption:'Rambut oranye alami, seumur hidup nggak pernah ke salon.',
+      pal:{ O:'#C2551A', D:'#5A2E14', K:'#1E1410', T:'#D9A878', B:'#7A5230' },
+      art:["BBBBBBBBBBBBBBB","..OO.......OO..","..OO.......OO..","..OO.......OO..","..OOO.....OOO..","...OOOOOOOOO...","...OODDDDDOO...","..OODTKTKTDOO..","..ODDTTTTTDDO..","..ODTTTTTTTDO..","..ODTKKKKKTDO..","...ODDTTTDDO...","...OOOOOOOOO...","....OOO.OOO....","...OOO...OOO..."] },
   ],
 });

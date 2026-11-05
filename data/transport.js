@@ -17,5 +17,9 @@
       caption:'Kudanya yang kerja, kita yang sibuk foto-foto.',
       pal:{ B:'#8A5128', D:'#3A2212', R:'#C8352B', Y:'#F2C14E', K:'#222222' },
       art:["...............",".DD............",".BBD.....RRRRRR","BBBBD....R....R","BKBBD....R....R","..BBB....R....R","...BBBBBYYYYYYY","...BBBBBBYYYYYY","...BBBBBD.DDD..","...BB.BB.DD.DD.","...B...B.D.Y.D.","...B...B.DYYYD.","...B...B.D.Y.D.","...DD..DDDD.DD.",".........DDD..."] },
+    { id:'sampan', name:'Sampan', bg:'#CDEBF2',
+      caption:'Kecil-kecil gini, sinyal di tengah sungai tetap ilang.',
+      pal:{ B:'#8A5A2B', D:'#54341A', R:'#C8321E', W:'#2F86B5', P:'#6B4A22', Y:'#E8C24A', S:'#C98E5C' },
+      art:["...............",".....Y.........","....YYY........","...YYYYY....PPP","..YYYYYYY...PP.",".....S......P..","....RRRSSSSP...","....RRR...P....","B...RRR..P....B","BBB.RRR.P...BBB",".BBBBBBBBBBBBB.",".DDDDDDDDDDDDD.","..BBBBBBBBBBB..","...DDDDDDDDD...",".WW.WWW.WWW.WW."] },
   ],
 });
