@@ -1,0 +1,514 @@
+<title>NonoIndo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@500;700;800&display=swap">
+<style>
+/* Layout: one thumb-reach column, painted like a gerobak: cobalt panel, yellow sign lettering, paper puzzle board. */
+:root {
+  --gerobak: #173FA3;
+  --gerobak-deep: #0F2C78;
+  --kuning: #FFCB2E;
+  --merah: #E23A2E;
+  --kertas: #FFF9E8;
+  --tinta: #14204D;
+  --lembut: #C9D6FF;
+  --display: "Bungee", "Arial Black", sans-serif;
+  --body: "Figtree", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  background: var(--gerobak);
+  color: var(--kertas);
+  font: 500 16px/1.45 var(--body);
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.wrap {
+  max-width: 520px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+h1, h2 { margin: 0; font-family: var(--display); font-weight: 400; }
+h1 {
+  font-size: clamp(44px, 14vw, 64px);
+  line-height: 1;
+  color: var(--kuning);
+  text-shadow: 3px 3px 0 var(--merah);
+}
+.tag { margin: 6px 0 0; color: var(--lembut); }
+.sethead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.sethead h2 { font-size: 22px; }
+.sethead span { font-weight: 800; color: var(--kuning); font-variant-numeric: tabular-nums; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.tile {
+  appearance: none; border: 0; padding: 0; background: none; color: inherit;
+  font: inherit; text-align: left; cursor: pointer; min-width: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.tile canvas { width: 100%; aspect-ratio: 1; display: block; image-rendering: pixelated; border: 3px solid var(--kuning); }
+.tile b { font-weight: 800; font-size: 14px; line-height: 1.2; }
+.tile small { color: var(--lembut); font-size: 13px; font-variant-numeric: tabular-nums; }
+.how { background: var(--gerobak-deep); padding: 14px 16px; }
+.how h2 { font-size: 16px; color: var(--kuning); margin-bottom: 6px; }
+.how p { margin: 0; color: var(--lembut); }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.topbar h2 { font-size: 18px; color: var(--kuning); min-width: 0; text-align: center; }
+.clock { font-weight: 800; font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
+#board {
+  display: block; width: 100%; aspect-ratio: 1;
+  background: var(--kertas); touch-action: none; cursor: pointer;
+  outline-offset: 3px;
+}
+button.act {
+  appearance: none; border: 0; cursor: pointer; font: 800 15px/1 var(--body);
+  min-height: 48px; padding: 0 14px; color: var(--tinta); background: var(--kertas);
+}
+button.ghost { background: var(--gerobak-deep); color: var(--kertas); }
+button.primary { background: var(--kuning); color: var(--tinta); }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible, .tile:focus-visible, #board:focus-visible { outline: 3px solid var(--kuning); outline-offset: 3px; }
+#back { min-height: 44px; padding: 0 12px; }
+.tools { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 3px solid var(--kertas); }
+.tools button { appearance: none; border: 0; cursor: pointer; font: 800 16px/1 var(--body); background: transparent; color: var(--kertas); min-height: 54px; font-size: 16px; }
+.tools button[aria-pressed="true"] { background: var(--kertas); color: var(--tinta); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.note { margin: 0; color: var(--lembut); font-size: 14px; }
+#reveal h2 { font-size: 30px; line-height: 1.1; color: var(--kuning); text-shadow: 2px 2px 0 var(--merah); }
+#reveal p { margin: 6px 0 0; font-size: 18px; font-weight: 700; }
+#reveal .time { color: var(--lembut); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+#reveal { display: flex; flex-direction: column; gap: 14px; animation: rise .35s ease-out both; }
+@keyframes rise { from { transform: translateY(10px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #reveal { animation: none; } }
+</style>
+
+<div class="wrap" id="home">
+  <header>
+    <h1>NonoIndo</h1>
+    <p class="tag">Tebak gambarnya dari angka, satu kotak demi satu kotak.</p>
+  </header>
+  <section style="display:flex;flex-direction:column;gap:10px">
+    <div class="sethead"><h2>Kuliner</h2><span id="count">0/3</span></div>
+    <div class="tiles" id="tiles"></div>
+  </section>
+  <section class="how">
+    <h2>Cara main</h2>
+    <p>Angka menunjukkan panjang kotak terisi yang berurutan di baris atau kolom itu, sesuai urutannya. Antarkelompok wajib ada minimal satu kotak kosong. Pakai Silang untuk menandai kotak yang kamu yakin kosong.</p>
+  </section>
+</div>
+
+<div class="wrap" id="play" hidden>
+  <div class="topbar">
+    <button class="act ghost" id="back" type="button">Kembali</button>
+    <h2 id="ptitle">Puzzle 1</h2>
+    <span class="clock" id="clock">0:00</span>
+  </div>
+  <canvas id="board" tabindex="0" role="application" aria-label="Papan nonogram 10 kali 10. Tombol panah untuk pindah, spasi untuk menandai."></canvas>
+  <div id="controls" style="display:flex;flex-direction:column;gap:10px">
+    <div class="tools" role="group" aria-label="Alat">
+      <button id="toolFill" type="button" aria-pressed="true">Isi</button>
+      <button id="toolCross" type="button" aria-pressed="false">Silang</button>
+    </div>
+    <div class="row2">
+      <button class="act ghost" id="undo" type="button">Urungkan</button>
+      <button class="act ghost" id="reset" type="button">Ulang</button>
+    </div>
+    <p class="note">Geser jari untuk mengisi banyak kotak sekaligus.</p>
+  </div>
+  <div id="reveal" hidden>
+    <div>
+      <h2 id="rname"></h2>
+      <p id="rcap"></p>
+    </div>
+    <div class="time" id="rtime"></div>
+    <div class="row2">
+      <button class="act ghost" id="again" type="button">Main lagi</button>
+      <button class="act primary" id="next" type="button">Lanjut</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const PAL = {
+    W:'#F7F7F2', G:'#BEC3C8', R:'#CD322D', B:'#825537', b:'#A5734B', Y:'#F0BE3C',
+    S:'#AFCDE1', D:'#552D19', K:'#78411E', O:'#B95F1E', T:'#D7AA6E', I:'#E1F0F5', P:'#C8E1EB'
+  };
+  const PUZZLES = [
+    { id:'bakso', name:'Bakso', bg:'#F2A33A',
+      caption:'Tiga sendok sambal dulu, baru boleh ngaku kuat.',
+      art:["...S..S...","..BB..BB..",".BbBDBbBB.",".BBBDBBBB.","WWWWWWWWWW","WRWRWWRWRW",".WWWWWWWW.","..WWWWWW..","...WWWW...","...GGGG..."] },
+    { id:'sate', name:'Sate', bg:'#8FD0C4',
+      caption:'Asapnya ke mana-mana, satu RT jadi lapar.',
+      art:[".......T..","......KK..",".....KDK.T","....KKK.KK","...KDK.KDK","..KKK.KKK.",".KDK.KDK..",".TK.KKK...","WT.KDK..WW","WWWWWWWWW."] },
+    { id:'esteh', name:'Es Teh Plastik', bg:'#2F6FDE',
+      caption:'Karet gelang lepas, celana jadi korban.',
+      art:["......R...","..P...R.P.","..PP..RPP.","...PPPRP..",".....YY...","...OOOOO..","..OIOOOOO.","..OOOOIOO.","..OOIOOOO.","...OOOOO.."] },
+  ];
+  const INK = '#14204D', PAPER = '#FFF9E8', LINE = '#C9C2AB', LINE5 = '#14204D',
+        HI = '#FFE9A3', CROSS = '#E23A2E';
+  const FILL = 1, CROSSED = 2, N = 10;
+  const KEY = 'nonoindo.v1';
+  const $ = id => document.getElementById(id);
+
+  const store = {
+    read() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } },
+    write(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} },
+  };
+  let save = store.read();
+  save.best = save.best || {};
+  save.grids = save.grids || {};
+
+  const runs = line => {
+    const out = []; let n = 0;
+    for (const v of line) { if (v) n++; else if (n) { out.push(n); n = 0; } }
+    if (n) out.push(n);
+    return out;
+  };
+  const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
+  const fmt = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+  for (const p of PUZZLES) {
+    const bin = p.art.map(r => [...r].map(c => c === '.' ? 0 : 1));
+    p.rows = bin.map(runs);
+    p.cols = bin[0].map((_, c) => runs(bin.map(r => r[c])));
+  }
+
+  const cv = $('board'), ctx = cv.getContext('2d');
+  let cur = null, grid = null, tool = FILL, undoStack = [], W = 0, geo = null;
+  let stroke = null, focus = null, keyCursor = false;
+  let elapsed = 0, ticking = null, done = false, anim = null, rafId = 0;
+
+  function makeGeo() {
+    const css = cv.getBoundingClientRect().width || 340;
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    cv.width = cv.height = Math.round(css * dpr);
+    W = cv.width;
+    const rowDepth = Math.max(...cur.rows.map(c => Math.max(c.length, 1)));
+    const colDepth = Math.max(...cur.cols.map(c => Math.max(c.length, 1)));
+    const depth = Math.max(rowDepth, colDepth);
+    const cell = Math.floor(W / (N + depth * 0.6));
+    const ox = W - cell * N, oy = W - cell * N;
+    geo = { cell, ox, oy, dpr, css };
+    cv.dataset.ox = ox / dpr; cv.dataset.oy = oy / dpr; cv.dataset.cell = cell / dpr;
+  }
+
+  function lineDone(i, isRow) {
+    const line = isRow ? grid[i] : grid.map(r => r[i]);
+    return same(runs(line.map(v => v === FILL ? 1 : 0)), isRow ? cur.rows[i] : cur.cols[i]);
+  }
+
+  function drawClues() {
+    const { cell, ox, oy } = geo;
+    const fs = Math.round(cell * 0.56);
+    ctx.font = `800 ${fs}px Figtree, system-ui, sans-serif`;
+    ctx.textBaseline = 'middle';
+    for (let r = 0; r < N; r++) {
+      const clue = cur.rows[r].length ? cur.rows[r] : [0];
+      ctx.globalAlpha = lineDone(r, true) ? .32 : 1;
+      ctx.fillStyle = INK; ctx.textAlign = 'right';
+      const step = cell * 0.56;
+      clue.slice().reverse().forEach((n, i) => {
+        ctx.fillText(n, ox - cell * 0.18 - i * step, oy + r * cell + cell * .54);
+      });
+    }
+    for (let c = 0; c < N; c++) {
+      const clue = cur.cols[c].length ? cur.cols[c] : [0];
+      ctx.globalAlpha = lineDone(c, false) ? .32 : 1;
+      ctx.fillStyle = INK; ctx.textAlign = 'center';
+      clue.slice().reverse().forEach((n, i) => {
+        ctx.fillText(n, ox + c * cell + cell / 2, oy - cell * .32 - i * cell * .62);
+      });
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    rafId = 0;
+    if (!cur || !geo) return;
+    const { cell, ox, oy, dpr } = geo;
+    if (anim) { drawReveal(); return; }
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, W);
+    if (done) { drawArt(0, 0, W / N); return; }
+    if (focus) {
+      ctx.fillStyle = HI;
+      ctx.fillRect(0, oy + focus.r * cell, W, cell);
+      ctx.fillRect(ox + focus.c * cell, 0, cell, W);
+    }
+    drawClues();
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const x = ox + c * cell, y = oy + r * cell, v = grid[r][c];
+      if (v === FILL) { ctx.fillStyle = INK; ctx.fillRect(x, y, cell, cell); }
+      if (v === CROSSED) {
+        const m = cell * .28;
+        ctx.strokeStyle = CROSS; ctx.lineWidth = Math.max(2, cell * .09); ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x + m, y + m); ctx.lineTo(x + cell - m, y + cell - m);
+        ctx.moveTo(x + cell - m, y + m); ctx.lineTo(x + m, y + cell - m);
+        ctx.stroke();
+      }
+    }
+    for (let i = 0; i <= N; i++) {
+      const major = i % 5 === 0;
+      ctx.strokeStyle = major ? LINE5 : LINE;
+      ctx.lineWidth = major ? Math.max(2, dpr * 1.5) : Math.max(1, dpr * .6);
+      const p = i * cell;
+      ctx.beginPath();
+      ctx.moveTo(ox + p, oy); ctx.lineTo(ox + p, oy + cell * N);
+      ctx.moveTo(ox, oy + p); ctx.lineTo(ox + cell * N, oy + p);
+      ctx.stroke();
+    }
+    if (keyCursor && focus) {
+      ctx.strokeStyle = CROSS; ctx.lineWidth = Math.max(2, dpr * 2);
+      ctx.strokeRect(ox + focus.c * cell, oy + focus.r * cell, cell, cell);
+    }
+  }
+
+  function drawArt(x0, y0, size, p = cur, c2 = ctx, scale = 1) {
+    c2.fillStyle = p.bg;
+    c2.fillRect(x0, y0, size * N, size * N);
+    p.art.forEach((row, r) => [...row].forEach((ch, c) => {
+      if (ch === '.') return;
+      const s = size * scale, off = (size - s) / 2;
+      c2.fillStyle = PAL[ch];
+      c2.fillRect(Math.floor(x0 + c * size + off), Math.floor(y0 + r * size + off), Math.ceil(s) + 1, Math.ceil(s) + 1);
+    }));
+  }
+
+  function drawReveal() {
+    const { cell, ox, oy } = geo;
+    const t = (performance.now() - anim.start) / 1000;
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, W);
+    const z = Math.min(1, Math.max(0, (t - .85) / .45));
+    const e = 1 - Math.pow(1 - z, 3);
+    const size = cell + (W / N - cell) * e;
+    const x0 = ox * (1 - e), y0 = oy * (1 - e);
+    if (z === 0) { ctx.globalAlpha = Math.max(0, 1 - t * 3); drawClues(); ctx.globalAlpha = 1; }
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const d = Math.hypot(r - 4.5, c - 4.5) / 6.4;
+      const k = Math.min(1, Math.max(0, (t - d * .55) / .28));
+      const ch = cur.art[r][c];
+      const x = x0 + c * size, y = y0 + r * size;
+      ctx.fillStyle = grid[r][c] === FILL ? INK : PAPER;
+      ctx.fillRect(Math.floor(x), Math.floor(y), Math.ceil(size) + 1, Math.ceil(size) + 1);
+      if (k > 0) {
+        const s = size * k, off = (size - s) / 2;
+        ctx.fillStyle = ch === '.' ? cur.bg : PAL[ch];
+        ctx.fillRect(Math.floor(x + off), Math.floor(y + off), Math.ceil(s) + 1, Math.ceil(s) + 1);
+      }
+    }
+    if (t > 1.3) { anim = null; draw(); return; }
+    requestAnimationFrame(draw);
+  }
+
+  const redraw = () => { if (!rafId) rafId = requestAnimationFrame(draw); };
+
+  function cellAt(e) {
+    const rect = cv.getBoundingClientRect();
+    const k = W / rect.width;
+    const x = (e.clientX - rect.left) * k - geo.ox, y = (e.clientY - rect.top) * k - geo.oy;
+    return { c: Math.floor(x / geo.cell), r: Math.floor(y / geo.cell) };
+  }
+  const inGrid = p => p.r >= 0 && p.c >= 0 && p.r < N && p.c < N;
+  const clampP = p => ({ r: Math.min(N - 1, Math.max(0, p.r)), c: Math.min(N - 1, Math.max(0, p.c)) });
+
+  function pushUndo() {
+    undoStack.push(grid.map(r => r.slice()));
+    if (undoStack.length > 200) undoStack.shift();
+    $('undo').disabled = false;
+  }
+  function beginStroke(p) {
+    const startV = grid[p.r][p.c];
+    pushUndo();
+    stroke = { startV, paint: startV === tool ? 0 : tool, last: p, origin: p, axis: null };
+    applyCell(p);
+  }
+  function applyCell(p) {
+    if (grid[p.r][p.c] === stroke.startV) grid[p.r][p.c] = stroke.paint;
+  }
+  function moveStroke(p) {
+    if (!stroke.axis && (p.r !== stroke.origin.r || p.c !== stroke.origin.c)) {
+      stroke.axis = Math.abs(p.c - stroke.origin.c) >= Math.abs(p.r - stroke.origin.r) ? 'h' : 'v';
+    }
+    if (stroke.axis === 'h') p = { r: stroke.origin.r, c: p.c };
+    if (stroke.axis === 'v') p = { r: p.r, c: stroke.origin.c };
+    const steps = Math.max(Math.abs(p.r - stroke.last.r), Math.abs(p.c - stroke.last.c));
+    for (let i = 1; i <= steps; i++) {
+      applyCell({
+        r: stroke.last.r + Math.round((p.r - stroke.last.r) * i / steps),
+        c: stroke.last.c + Math.round((p.c - stroke.last.c) * i / steps),
+      });
+    }
+    stroke.last = p; focus = p;
+  }
+  function endStroke() {
+    stroke = null;
+    persist();
+    checkWin();
+  }
+  function persist() {
+    if (!cur || done) return;
+    save.grids[cur.id] = { g: grid, t: elapsed };
+    store.write(save);
+  }
+
+  cv.addEventListener('pointerdown', e => {
+    if (done) return;
+    const p = cellAt(e);
+    if (!inGrid(p)) return;
+    e.preventDefault();
+    try { cv.setPointerCapture(e.pointerId); } catch {}
+    keyCursor = false; focus = p;
+    beginStroke(p); redraw();
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!stroke) return;
+    moveStroke(clampP(cellAt(e))); redraw();
+  });
+  const up = () => { if (stroke) { endStroke(); redraw(); } };
+  cv.addEventListener('pointerup', up);
+  cv.addEventListener('pointercancel', up);
+  cv.addEventListener('keydown', e => {
+    if (done) return;
+    const dir = { ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1] }[e.key];
+    if (dir) {
+      e.preventDefault(); keyCursor = true;
+      focus = clampP(focus ? { r: focus.r + dir[0], c: focus.c + dir[1] } : { r: 0, c: 0 });
+      redraw();
+    } else if ((e.key === ' ' || e.key === 'Enter') ) {
+      e.preventDefault(); keyCursor = true;
+      focus = focus || { r: 0, c: 0 };
+      beginStroke(focus); endStroke(); redraw();
+    }
+  });
+
+  function checkWin() {
+    const ok = grid.every((_, i) => lineDone(i, true)) && grid[0].every((_, i) => lineDone(i, false));
+    if (!ok) return;
+    done = true;
+    clearInterval(ticking);
+    const best = save.best[cur.id];
+    const isBest = best === undefined || elapsed < best;
+    if (isBest) save.best[cur.id] = elapsed;
+    delete save.grids[cur.id];
+    store.write(save);
+    focus = null;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    anim = reduce ? null : { start: performance.now() };
+    $('ptitle').textContent = 'Selesai!';
+    $('controls').hidden = true;
+    $('rname').textContent = cur.name;
+    $('rcap').textContent = cur.caption;
+    $('rtime').textContent = `Waktu ${fmt(elapsed)}${isBest ? ' · rekor baru' : ` · rekor ${fmt(best)}`}`;
+    const idx = PUZZLES.indexOf(cur);
+    $('next').textContent = idx < PUZZLES.length - 1 ? 'Lanjut' : 'Lihat koleksi';
+    setTimeout(() => { $('reveal').hidden = false; }, reduce ? 0 : 1300);
+    redraw();
+  }
+
+  function setTool(t) {
+    tool = t;
+    $('toolFill').setAttribute('aria-pressed', t === FILL);
+    $('toolCross').setAttribute('aria-pressed', t === CROSSED);
+  }
+
+  function open(p, fresh) {
+    cur = p;
+    const saved = !fresh && save.grids[p.id];
+    grid = saved ? saved.g.map(r => r.slice()) : Array.from({ length: N }, () => Array(N).fill(0));
+    elapsed = saved ? saved.t : 0;
+    undoStack = []; done = false; anim = null; stroke = null; focus = null; keyCursor = false;
+    $('undo').disabled = true;
+    setTool(FILL);
+    $('ptitle').textContent = `Puzzle ${PUZZLES.indexOf(p) + 1}`;
+    $('clock').textContent = fmt(elapsed);
+    $('controls').hidden = false;
+    $('reveal').hidden = true;
+    $('home').hidden = true;
+    $('play').hidden = false;
+    makeGeo();
+    clearInterval(ticking);
+    ticking = setInterval(() => {
+      if (document.hidden || done) return;
+      elapsed++; $('clock').textContent = fmt(elapsed);
+      if (elapsed % 5 === 0) persist();
+    }, 1000);
+    redraw();
+  }
+
+  function showHome() {
+    clearInterval(ticking);
+    persist();
+    cur = null; geo = null;
+    $('play').hidden = true;
+    $('home').hidden = false;
+    renderTiles();
+    scrollTo(0, 0);
+  }
+
+  function renderTiles() {
+    const box = $('tiles');
+    box.textContent = '';
+    let solved = 0;
+    PUZZLES.forEach((p, i) => {
+      const has = save.best[p.id] !== undefined;
+      if (has) solved++;
+      const b = document.createElement('button');
+      b.className = 'tile'; b.type = 'button'; b.id = `tile-${p.id}`;
+      const c = document.createElement('canvas');
+      c.width = c.height = 200;
+      const x = c.getContext('2d');
+      if (has) drawArt(0, 0, 20, p, x);
+      else {
+        x.fillStyle = '#0F2C78'; x.fillRect(0, 0, 200, 200);
+        x.fillStyle = '#FFCB2E'; x.font = '110px Bungee, sans-serif';
+        x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('?', 100, 108);
+      }
+      const t = document.createElement('b');
+      t.textContent = has ? p.name : `Puzzle ${i + 1}`;
+      const s = document.createElement('small');
+      s.textContent = has ? `Rekor ${fmt(save.best[p.id])}` : (save.grids[p.id] ? 'Sedang dimainkan' : '10×10');
+      b.append(c, t, s);
+      b.addEventListener('click', () => open(p, has));
+      box.append(b);
+    });
+    $('count').textContent = `${solved}/${PUZZLES.length}`;
+  }
+
+  $('toolFill').addEventListener('click', () => setTool(FILL));
+  $('toolCross').addEventListener('click', () => setTool(CROSSED));
+  $('undo').addEventListener('click', () => {
+    const prev = undoStack.pop();
+    if (prev) grid = prev;
+    $('undo').disabled = !undoStack.length;
+    persist(); redraw();
+  });
+  $('reset').addEventListener('click', () => {
+    pushUndo();
+    grid = Array.from({ length: N }, () => Array(N).fill(0));
+    persist(); redraw();
+  });
+  $('back').addEventListener('click', showHome);
+  $('again').addEventListener('click', () => open(cur, true));
+  $('next').addEventListener('click', () => {
+    const i = PUZZLES.indexOf(cur);
+    if (i < PUZZLES.length - 1) open(PUZZLES[i + 1], save.best[PUZZLES[i + 1].id] !== undefined);
+    else showHome();
+  });
+  addEventListener('resize', () => { if (cur) { makeGeo(); redraw(); } });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) persist(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { renderTiles(); if (cur) redraw(); });
+  renderTiles();
+})();
+</script>

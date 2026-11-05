@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}</style>
+</head>
+<body>
+<title>NonoIndo Phaser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Figtree:wght@500;700;800&display=swap">
+<style>
+/* Layout: a fixed 1080x1920 Phaser stage, scaled to fit, on the same gerobak-blue ground as the game. */
+:root { color-scheme: dark; --gerobak: #173FA3; --kertas: #FFF9E8; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--gerobak); color: var(--kertas); font: 500 16px/1.45 "Figtree", system-ui, sans-serif; overflow: hidden; overscroll-behavior: none; }
+#game { position: fixed; inset: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); touch-action: none; }
+#game canvas { touch-action: none; display: block; }
+#fail { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding-block: 24px; padding-inline: 16px; text-align: center; }
+</style>
+
+<div id="game"></div>
+<div id="fail" hidden>Game gagal dimuat. Periksa koneksi internet, lalu buka lagi halaman ini.</div>
+
+<script id="rules">
+const PAL = {
+  W:'#F7F7F2', G:'#BEC3C8', R:'#CD322D', B:'#825537', b:'#A5734B', Y:'#F0BE3C',
+  S:'#AFCDE1', D:'#552D19', K:'#78411E', O:'#B95F1E', T:'#D7AA6E', I:'#E1F0F5', P:'#C8E1EB'
+};
+const PUZZLES = [
+  { id:'bakso', name:'Bakso', bg:'#F2A33A',
+    caption:'Tiga sendok sambal dulu, baru boleh ngaku kuat.',
+    art:["...S..S...","..BB..BB..",".BbBDBbBB.",".BBBDBBBB.","WWWWWWWWWW","WRWRWWRWRW",".WWWWWWWW.","..WWWWWW..","...WWWW...","...GGGG..."] },
+  { id:'sate', name:'Sate', bg:'#8FD0C4',
+    caption:'Asapnya ke mana-mana, satu RT jadi lapar.',
+    art:[".......T..","......KK..",".....KDK.T","....KKK.KK","...KDK.KDK","..KKK.KKK.",".KDK.KDK..",".TK.KKK...","WT.KDK..WW","WWWWWWWWW."] },
+  { id:'esteh', name:'Es Teh Plastik', bg:'#2F6FDE',
+    caption:'Karet gelang lepas, celana jadi korban.',
+    art:["......R...","..P...R.P.","..PP..RPP.","...PPPRP..",".....YY...","...OOOOO..","..OIOOOOO.","..OOOOIOO.","..OOIOOOO.","...OOOOO.."] },
+];
+const EMPTY = 0, FILL = 1, CROSSED = 2, N = 10;
+
+const runs = line => {
+  const out = []; let n = 0;
+  for (const v of line) { if (v) n++; else if (n) { out.push(n); n = 0; } }
+  if (n) out.push(n);
+  return out;
+};
+const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
+const fmt = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const blankGrid = () => Array.from({ length: N }, () => Array(N).fill(EMPTY));
+
+for (const p of PUZZLES) {
+  const bin = p.art.map(r => [...r].map(c => c === '.' ? 0 : 1));
+  p.rows = bin.map(runs);
+  p.cols = bin[0].map((_, c) => runs(bin.map(r => r[c])));
+}
+
+class Board {
+  constructor(puzzle, grid) {
+    this.puzzle = puzzle;
+    this.grid = grid ? grid.map(r => r.slice()) : blankGrid();
+    this.undoStack = [];
+    this.stroke = null;
+  }
+  lineDone(i, isRow) {
+    const line = isRow ? this.grid[i] : this.grid.map(r => r[i]);
+    return same(runs(line.map(v => v === FILL ? 1 : 0)), isRow ? this.puzzle.rows[i] : this.puzzle.cols[i]);
+  }
+  isWon() {
+    for (let i = 0; i < N; i++) if (!this.lineDone(i, true) || !this.lineDone(i, false)) return false;
+    return true;
+  }
+  pushUndo() {
+    this.undoStack.push(this.grid.map(r => r.slice()));
+    if (this.undoStack.length > 200) this.undoStack.shift();
+  }
+  undo() {
+    const prev = this.undoStack.pop();
+    if (prev) this.grid = prev;
+  }
+  reset() {
+    this.pushUndo();
+    this.grid = blankGrid();
+  }
+  apply(p) {
+    if (this.grid[p.r][p.c] === this.stroke.startV) this.grid[p.r][p.c] = this.stroke.paint;
+  }
+  begin(p, tool) {
+    const startV = this.grid[p.r][p.c];
+    this.pushUndo();
+    this.stroke = { startV, paint: startV === tool ? EMPTY : tool, last: p, origin: p, axis: null };
+    this.apply(p);
+  }
+  move(p) {
+    const s = this.stroke;
+    if (!s.axis && (p.r !== s.origin.r || p.c !== s.origin.c)) {
+      s.axis = Math.abs(p.c - s.origin.c) >= Math.abs(p.r - s.origin.r) ? 'h' : 'v';
+    }
+    if (s.axis === 'h') p = { r: s.origin.r, c: p.c };
+    if (s.axis === 'v') p = { r: p.r, c: s.origin.c };
+    const steps = Math.max(Math.abs(p.r - s.last.r), Math.abs(p.c - s.last.c));
+    for (let i = 1; i <= steps; i++) {
+      this.apply({
+        r: s.last.r + Math.round((p.r - s.last.r) * i / steps),
+        c: s.last.c + Math.round((p.c - s.last.c) * i / steps),
+      });
+    }
+    s.last = p;
+    return p;
+  }
+  end() { this.stroke = null; }
+}
+</script>
+
+<script>
+const TITLE_PNG = 'data:image/png;base64,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';
+const titleImage = new Image();
+const titleReady = new Promise(res => { titleImage.onload = titleImage.onerror = res; titleImage.src = TITLE_PNG; });
+
+const fontsReady = document.fonts
+  ? Promise.race([
+      Promise.all([document.fonts.load('400 40px Bungee'), document.fonts.load('800 40px Figtree')]),
+      new Promise(res => setTimeout(res, 2500)),
+    ]).catch(() => {})
+  : Promise.resolve();
+
+// Everything here needs Phaser, which loads afterwards, so it runs inside start().
+function start() {
+const VW = 1080, VH = 1920, MARGIN = 54, CONTENT = VW - MARGIN * 2;
+const BOARD_Y = 200;
+const hex = s => parseInt(s.slice(1), 16);
+const C = { blue:'#173FA3', deep:'#0F2C78', yellow:'#FFCB2E', red:'#E23A2E', paper:'#FFF9E8', ink:'#14204D', soft:'#C9D6FF', line:'#C9C2AB', hi:'#FFE9A3' };
+const DISPLAY = '"Bungee", "Arial Black", sans-serif', BODY = '"Figtree", system-ui, sans-serif';
+const KEY = 'nonoindo.phaser.v1';
+
+const store = {
+  read() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } },
+  write(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} },
+};
+const save = store.read();
+save.best = save.best || {};
+save.grids = save.grids || {};
+
+function label(scene, x, y, text, opts = {}) {
+  const style = {
+    fontFamily: opts.display ? DISPLAY : BODY,
+    fontStyle: opts.weight || (opts.display ? '400' : '500'),
+    fontSize: `${opts.size || 42}px`,
+    color: opts.color || C.paper,
+    align: opts.align || 'left',
+  };
+  if (opts.wrap) style.wordWrap = { width: opts.wrap };
+  const t = scene.add.text(x, y, text, style);
+  if (opts.lineSpacing) t.setLineSpacing(opts.lineSpacing);
+  if (opts.shadow) t.setShadow(opts.shadow, opts.shadow, C.red, 0, false, true);
+  return t;
+}
+
+function button(scene, x, y, w, h, text, onClick, opts = {}) {
+  const rect = scene.add.rectangle(x + w / 2, y + h / 2, w, h, hex(opts.fill || C.deep));
+  const txt = label(scene, x + w / 2, y + h / 2, text, { size: opts.size || 42, weight: '800', color: opts.color || C.paper }).setOrigin(0.5);
+  rect.setInteractive({ useHandCursor: true });
+  const b = {
+    rect, txt, enabled: true, onClick,
+    setEnabled(v) { b.enabled = v; rect.setAlpha(v ? 1 : 0.45); txt.setAlpha(v ? 1 : 0.45); return b; },
+    setLook(fill, color) { rect.setFillStyle(hex(fill)); txt.setColor(color); return b; },
+    setVisible(v) { rect.setVisible(v); txt.setVisible(v); rect.input && (rect.input.enabled = v); return b; },
+    press() { if (b.enabled) onClick(); },
+  };
+  rect.on('pointerup', () => b.press());
+  return b;
+}
+
+function artTexture(scene, p) {
+  const key = `art-${p.id}`;
+  if (scene.textures.exists(key)) return key;
+  const tex = scene.textures.createCanvas(key, N, N);
+  const ctx = tex.getContext();
+  ctx.fillStyle = p.bg; ctx.fillRect(0, 0, N, N);
+  p.art.forEach((row, r) => [...row].forEach((ch, c) => {
+    if (ch === '.') return;
+    ctx.fillStyle = PAL[ch]; ctx.fillRect(c, r, 1, 1);
+  }));
+  tex.refresh();
+  tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+  return key;
+}
+
+class TitleScene extends Phaser.Scene {
+  constructor() { super('Title'); }
+  create() {
+    if (titleImage.naturalWidth) {
+      if (!this.textures.exists('title')) {
+        this.textures.addImage('title', titleImage);
+        this.textures.get('title').setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+      this.add.image(VW / 2, VH / 2, 'title').setDisplaySize(VW, VH);
+    } else {
+      label(this, VW / 2, 300, 'NonoIndo', { display: true, size: 136, color: C.yellow, shadow: 7 }).setOrigin(0.5);
+    }
+    this.btn = { play: button(this, 385, 1760, 310, 116, 'MAIN', () => this.scene.start('Home'), { fill: C.yellow, color: C.ink, size: 52 }) };
+    this.btn.play.rect.setStrokeStyle(8, hex(C.ink));
+    this.btn.play.txt.setFontFamily(DISPLAY).setFontStyle('400');
+    this.tweens.add({ targets: [this.btn.play.rect, this.btn.play.txt], scale: 1.05, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+}
+
+class HomeScene extends Phaser.Scene {
+  constructor() { super('Home'); }
+  create() {
+    this.btn = { back: button(this, MARGIN, 40, 240, 110, 'Kembali', () => this.scene.start('Title'), { size: 38 }) };
+    label(this, MARGIN, 165, 'Koleksi', { display: true, size: 76, color: C.yellow, shadow: 5 });
+    label(this, MARGIN, 255, 'Tebak gambarnya dari angka, satu kotak demi satu kotak.', { size: 42, color: C.soft, wrap: CONTENT, lineSpacing: 8 });
+    label(this, MARGIN, 400, 'Kuliner', { display: true, size: 58 });
+    const solved = PUZZLES.filter(p => save.best[p.id] !== undefined).length;
+    label(this, VW - MARGIN, 410, `${solved}/${PUZZLES.length}`, { size: 44, weight: '800', color: C.yellow }).setOrigin(1, 0);
+
+    const gap = 30, w = (CONTENT - gap * 2) / 3, y = 490;
+    PUZZLES.forEach((p, i) => {
+      const x = MARGIN + i * (w + gap), has = save.best[p.id] !== undefined;
+      const frame = this.add.rectangle(x + w / 2, y + w / 2, w, w, hex(C.deep)).setStrokeStyle(8, hex(C.yellow));
+      if (has) this.add.image(x + w / 2, y + w / 2, artTexture(this, p)).setDisplaySize(w - 8, w - 8);
+      else label(this, x + w / 2, y + w / 2, '?', { display: true, size: 130, color: C.yellow }).setOrigin(0.5);
+      frame.setInteractive({ useHandCursor: true });
+      frame.on('pointerup', () => this.scene.start('Play', { puzzle: p, fresh: has }));
+      label(this, x, y + w + 18, has ? p.name : `Puzzle ${i + 1}`, { size: 38, weight: '800', wrap: w });
+      const note = has ? `Rekor ${fmt(save.best[p.id])}` : (save.grids[p.id] ? 'Sedang dimainkan' : '10×10');
+      label(this, x, y + w + (has && p.name.length > 10 ? 110 : 66), note, { size: 34, color: C.soft, wrap: w });
+    });
+
+    const py = 1010, ph = 440;
+    this.add.rectangle(VW / 2, py + ph / 2, CONTENT, ph, hex(C.deep));
+    label(this, MARGIN + 40, py + 34, 'Cara main', { display: true, size: 42, color: C.yellow });
+    label(this, MARGIN + 40, py + 100,
+      'Angka menunjukkan panjang kotak terisi yang berurutan di baris atau kolom itu, sesuai urutannya. Antarkelompok wajib ada minimal satu kotak kosong. Pakai Silang untuk menandai kotak yang kamu yakin kosong.',
+      { size: 38, color: C.soft, wrap: CONTENT - 80, lineSpacing: 8 });
+  }
+}
+
+class PlayScene extends Phaser.Scene {
+  constructor() { super('Play'); }
+  init(data) {
+    this.puzzle = data.puzzle;
+    const saved = !data.fresh && save.grids[this.puzzle.id];
+    this.board = new Board(this.puzzle, saved && saved.g);
+    this.elapsed = saved ? saved.t : 0;
+    this.tool = FILL; this.done = false; this.focus = null; this.keyCursor = false;
+  }
+  create() {
+    const p = this.puzzle;
+    this.btn = {};
+    this.btn.back = button(this, MARGIN, 40, 240, 110, 'Kembali', () => this.toHome(), { size: 38 });
+    this.titleText = label(this, VW / 2, 95, `Puzzle ${PUZZLES.indexOf(p) + 1}`, { display: true, size: 46, color: C.yellow }).setOrigin(0.5);
+    this.clock = label(this, VW - MARGIN, 95, fmt(this.elapsed), { size: 46, weight: '800' }).setOrigin(1, 0.5);
+
+    const depth = Math.max(1, ...p.rows.map(c => c.length), ...p.cols.map(c => c.length));
+    const cell = Math.floor(CONTENT / (N + depth * 0.6));
+    this.geo = { cell, ox: MARGIN + CONTENT - cell * N, oy: BOARD_Y + CONTENT - cell * N };
+
+    this.add.rectangle(VW / 2, BOARD_Y + CONTENT / 2, CONTENT, CONTENT, hex(C.paper));
+    this.gfx = this.add.graphics().setDepth(1);
+    this.buildClues();
+
+    const ty = BOARD_Y + CONTENT + 36, half = CONTENT / 2;
+    this.toolFrame = this.add.rectangle(VW / 2, ty + 70, CONTENT, 140).setStrokeStyle(8, hex(C.paper)).setDepth(1);
+    this.btn.fill = button(this, MARGIN, ty, half, 140, 'Isi', () => this.setTool(FILL), { size: 46 });
+    this.btn.cross = button(this, MARGIN + half, ty, half, 140, 'Silang', () => this.setTool(CROSSED), { size: 46 });
+    const ay = ty + 170, aw = (CONTENT - 30) / 2;
+    this.btn.undo = button(this, MARGIN, ay, aw, 124, 'Urungkan', () => this.doUndo());
+    this.btn.reset = button(this, MARGIN + aw + 30, ay, aw, 124, 'Ulang', () => this.doReset());
+    this.btn.undo.setEnabled(false);
+    this.note = label(this, MARGIN, ay + 150, 'Geser jari untuk mengisi banyak kotak sekaligus.', { size: 36, color: C.soft, wrap: CONTENT });
+    this.setTool(FILL);
+
+    this.input.on('pointerdown', q => this.onDown(q));
+    this.input.on('pointermove', q => this.onMove(q));
+    this.input.on('pointerup', () => this.onUp());
+    this.input.on('pointerupoutside', () => this.onUp());
+    this.input.keyboard && this.input.keyboard.on('keydown', e => this.onKey(e));
+
+    this.ticker = this.time.addEvent({ delay: 1000, loop: true, callback: () => {
+      if (this.done) return;
+      this.elapsed++;
+      this.clock.setText(fmt(this.elapsed));
+      if (this.elapsed % 5 === 0) this.persist();
+    } });
+
+    this.events.once('shutdown', () => this.persist());
+    this.paint();
+  }
+
+  buildClues() {
+    const { cell, ox, oy } = this.geo, p = this.puzzle;
+    const size = Math.round(cell * 0.56);
+    const style = { size, weight: '800', color: C.ink };
+    this.rowClues = []; this.colClues = [];
+    for (let r = 0; r < N; r++) {
+      const clue = p.rows[r].length ? p.rows[r] : [0];
+      this.rowClues[r] = clue.slice().reverse().map((n, i) =>
+        label(this, ox - cell * 0.18 - i * cell * 0.56, oy + r * cell + cell * 0.5, String(n), style).setOrigin(1, 0.5).setDepth(2));
+    }
+    for (let c = 0; c < N; c++) {
+      const clue = p.cols[c].length ? p.cols[c] : [0];
+      this.colClues[c] = clue.slice().reverse().map((n, i) =>
+        label(this, ox + c * cell + cell / 2, oy - cell * 0.34 - i * cell * 0.62, String(n), style).setOrigin(0.5).setDepth(2));
+    }
+  }
+
+  paint() {
+    const g = this.gfx, { cell, ox, oy } = this.geo, grid = this.board.grid;
+    g.clear();
+    if (this.focus) {
+      g.fillStyle(hex(C.hi), 1);
+      g.fillRect(MARGIN, oy + this.focus.r * cell, CONTENT, cell);
+      g.fillRect(ox + this.focus.c * cell, BOARD_Y, cell, CONTENT);
+    }
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const x = ox + c * cell, y = oy + r * cell, v = grid[r][c];
+      if (v === FILL) { g.fillStyle(hex(C.ink), 1); g.fillRect(x, y, cell, cell); }
+      if (v === CROSSED) {
+        const m = cell * 0.28;
+        g.lineStyle(Math.max(4, cell * 0.09), hex(C.red), 1);
+        g.lineBetween(x + m, y + m, x + cell - m, y + cell - m);
+        g.lineBetween(x + cell - m, y + m, x + m, y + cell - m);
+      }
+    }
+    for (const major of [false, true]) {
+      g.lineStyle(major ? 5 : 2, hex(major ? C.ink : C.line), 1);
+      for (let i = 0; i <= N; i++) {
+        if ((i % 5 === 0) !== major) continue;
+        g.lineBetween(ox + i * cell, oy, ox + i * cell, oy + cell * N);
+        g.lineBetween(ox, oy + i * cell, ox + cell * N, oy + i * cell);
+      }
+    }
+    if (this.keyCursor && this.focus) {
+      g.lineStyle(6, hex(C.red), 1);
+      g.strokeRect(ox + this.focus.c * cell, oy + this.focus.r * cell, cell, cell);
+    }
+    for (let i = 0; i < N; i++) {
+      const ra = this.board.lineDone(i, true) ? 0.32 : 1, ca = this.board.lineDone(i, false) ? 0.32 : 1;
+      this.rowClues[i].forEach(t => t.setAlpha(ra));
+      this.colClues[i].forEach(t => t.setAlpha(ca));
+    }
+  }
+
+  cellAt(q) {
+    const { cell, ox, oy } = this.geo;
+    return { c: Math.floor((q.worldX - ox) / cell), r: Math.floor((q.worldY - oy) / cell) };
+  }
+  onDown(q) {
+    if (this.done) return;
+    const p = this.cellAt(q);
+    if (p.r < 0 || p.c < 0 || p.r >= N || p.c >= N) return;
+    this.keyCursor = false; this.focus = p;
+    this.board.begin(p, this.tool);
+    this.btn.undo.setEnabled(true);
+    this.paint();
+  }
+  onMove(q) {
+    if (!this.board.stroke) return;
+    const p = this.cellAt(q);
+    this.focus = this.board.move({ r: Phaser.Math.Clamp(p.r, 0, N - 1), c: Phaser.Math.Clamp(p.c, 0, N - 1) });
+    this.paint();
+  }
+  onUp() {
+    if (!this.board.stroke) return;
+    this.board.end();
+    this.persist();
+    this.paint();
+    if (this.board.isWon()) this.win();
+  }
+  onKey(e) {
+    if (this.done) return;
+    const dir = { ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1] }[e.key];
+    const clamp = v => Math.min(N - 1, Math.max(0, v));
+    if (dir) {
+      e.preventDefault();
+      this.keyCursor = true;
+      this.focus = this.focus ? { r: clamp(this.focus.r + dir[0]), c: clamp(this.focus.c + dir[1]) } : { r: 0, c: 0 };
+      this.paint();
+    } else if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      this.keyCursor = true;
+      this.focus = this.focus || { r: 0, c: 0 };
+      this.board.begin(this.focus, this.tool);
+      this.btn.undo.setEnabled(true);
+      this.onUp();
+    }
+  }
+
+  setTool(t) {
+    this.tool = t;
+    this.btn.fill.setLook(t === FILL ? C.paper : C.blue, t === FILL ? C.ink : C.paper);
+    this.btn.cross.setLook(t === CROSSED ? C.paper : C.blue, t === CROSSED ? C.ink : C.paper);
+  }
+  doUndo() {
+    this.board.undo();
+    this.btn.undo.setEnabled(this.board.undoStack.length > 0);
+    this.persist(); this.paint();
+  }
+  doReset() {
+    this.board.reset();
+    this.btn.undo.setEnabled(true);
+    this.persist(); this.paint();
+  }
+  persist() {
+    if (this.done) return;
+    save.grids[this.puzzle.id] = { g: this.board.grid, t: this.elapsed };
+    store.write(save);
+  }
+  toHome() { this.scene.start('Home'); }
+
+  win() {
+    this.done = true;
+    this.ticker.remove();
+    const id = this.puzzle.id, best = save.best[id], isBest = best === undefined || this.elapsed < best;
+    if (isBest) save.best[id] = this.elapsed;
+    delete save.grids[id];
+    store.write(save);
+    this.focus = null;
+    this.titleText.setText('Selesai!');
+    ['fill', 'cross', 'undo', 'reset'].forEach(k => this.btn[k].setVisible(false));
+    this.toolFrame.setVisible(false); this.note.setVisible(false);
+    this.result = isBest ? `Waktu ${fmt(this.elapsed)} · rekor baru` : `Waktu ${fmt(this.elapsed)} · rekor ${fmt(best)}`;
+
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      this.gfx.clear();
+      [...this.rowClues, ...this.colClues].flat().forEach(t => t.setVisible(false));
+      this.add.image(VW / 2, BOARD_Y + CONTENT / 2, artTexture(this, this.puzzle)).setDisplaySize(CONTENT, CONTENT).setDepth(3);
+      this.showResult();
+      return;
+    }
+    this.playReveal();
+  }
+
+  playReveal() {
+    const { cell, ox, oy } = this.geo, p = this.puzzle, half = cell * N / 2;
+    const stage = this.add.container(ox + half, oy + half).setDepth(3);
+    const grid = this.board.grid;
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      const x = c * cell + cell / 2 - half, y = r * cell + cell / 2 - half, ch = p.art[r][c];
+      const under = this.add.rectangle(x, y, cell + 1, cell + 1, hex(grid[r][c] === FILL ? C.ink : C.paper));
+      const top = this.add.rectangle(x, y, cell + 1, cell + 1, hex(ch === '.' ? p.bg : PAL[ch])).setScale(0);
+      stage.add([under, top]);
+      const d = Math.hypot(r - 4.5, c - 4.5) / 6.4;
+      this.tweens.add({ targets: top, scale: 1, delay: d * 550, duration: 280, ease: 'Back.easeOut' });
+    }
+    this.gfx.clear();
+    this.tweens.add({ targets: [...this.rowClues, ...this.colClues].flat(), alpha: 0, duration: 300 });
+    this.tweens.add({
+      targets: stage, x: VW / 2, y: BOARD_Y + CONTENT / 2, scale: CONTENT / (cell * N),
+      delay: 850, duration: 450, ease: 'Cubic.easeOut',
+      onComplete: () => { this.confetti(); this.showResult(); },
+    });
+  }
+
+  confetti() {
+    if (!this.textures.exists('confetti')) {
+      const t = this.textures.createCanvas('confetti', 14, 14);
+      const x = t.getContext(); x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, 14, 14); t.refresh();
+    }
+    const em = this.add.particles(VW / 2, BOARD_Y + CONTENT / 2, 'confetti', {
+      speed: { min: 350, max: 1000 }, angle: { min: 0, max: 360 }, gravityY: 1100,
+      lifespan: 1200, scale: { start: 1.3, end: 0.3 }, rotate: { min: 0, max: 360 },
+      tint: [hex(C.yellow), hex(C.red), hex(C.paper), hex(this.puzzle.bg)], emitting: false,
+    }).setDepth(4);
+    em.explode(70);
+  }
+
+  showResult() {
+    const p = this.puzzle, y = BOARD_Y + CONTENT + 36, idx = PUZZLES.indexOf(p);
+    label(this, MARGIN, y, p.name, { display: true, size: 74, color: C.yellow, shadow: 5 });
+    label(this, MARGIN, y + 100, p.caption, { size: 46, weight: '700', wrap: CONTENT, lineSpacing: 6 });
+    label(this, MARGIN, y + 250, this.result, { size: 38, color: C.soft });
+    const by = y + 320, w = (CONTENT - 30) / 2;
+    this.btn.again = button(this, MARGIN, by, w, 124, 'Main lagi', () => this.scene.restart({ puzzle: p, fresh: true }));
+    this.btn.next = button(this, MARGIN + w + 30, by, w, 124, idx < PUZZLES.length - 1 ? 'Lanjut' : 'Lihat koleksi', () => {
+      const n = PUZZLES[idx + 1];
+      if (n) this.scene.start('Play', { puzzle: n, fresh: save.best[n.id] !== undefined });
+      else this.toHome();
+    }, { fill: C.yellow, color: C.ink });
+  }
+}
+
+function boot() {
+  window.nonoGame = new Phaser.Game({
+    type: Phaser.AUTO,
+    parent: 'game',
+    width: VW, height: VH,
+    backgroundColor: C.blue,
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    input: { activePointers: 2 },
+    banner: false,
+    scene: [TitleScene, HomeScene, PlayScene],
+  });
+}
+boot();
+}
+</script>
+
+<script>
+(() => {
+  const urls = [
+    'https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js',
+    'https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js',
+  ];
+  const fail = () => { document.getElementById('fail').hidden = false; };
+  const startGame = () => Promise.all([fontsReady, titleReady]).then(() => {
+    try { start(); } catch (e) { console.error(e); fail(); }
+  });
+  function load(i) {
+    if (i >= urls.length) return fail();
+    const s = document.createElement('script');
+    s.src = urls[i];
+    s.onload = startGame;
+    s.onerror = () => load(i + 1);
+    document.head.append(s);
+  }
+  load(0);
+})();
+</script>
+</body>
+</html>
