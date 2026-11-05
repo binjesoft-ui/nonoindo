@@ -9,5 +9,13 @@
       caption:'Atapnya runcing, pulang kampungnya ramai.',
       pal:{ R:'#3A2A20', Y:'#E0B22E', C:'#B3261E', W:'#7A4B26', G:'#5A8F3C' },
       art:["R......R......R","RR....RRR....RR",".RR...RRR...RR.",".RRR.RRRRR.RRR.","..RRRRRRRRRRR..","...RRRRRRRRR...",".YYYYYYYYYYYYY.","..CYCYCYCYCYC..","..CCCCCCCCCCC..","..CYCYCYCYCYC..","..YYYYYYYYYYY..","..W..W...W..W..","..W..W...W..W..","..W..W...W..W..",".GGGGGGGGGGGGG."] },
+    { id:'jam-gadang', name:'Jam Gadang', bg:'#8FD3EE',
+      caption:'Janjian di sini, telatnya tetap jam karet.',
+      pal:{ R:'#3B4A52', T:'#F2EFE6', W:'#FFFFFF', K:'#1E2226', S:'#7D8794' },
+      art:[".R.....R.....R.","RRR...RRR...RRR",".RRRRRRRRRRRRR.","...RRRRRRRRR...","....TTTTTTT....","....TTKKKTT....","....TKWKWKT....","....TKWKKKT....","....TKWWWKT....","....TTKKKTT....","....T.TTT.T....","....T.TTT.T....","....TTTTTTT....","..TTTTTTTTTTT..",".SSSSSSSSSSSSS."] },
+    { id:'honai', name:'Honai', bg:'#BDE3C8',
+      caption:'Rumah bulat dari Papua, dingin gunung auto kalah.',
+      pal:{ T:'#C9A25A', Y:'#8F6A2E', B:'#6B3F1D', D:'#2A1A10', G:'#4E8F3A' },
+      art:["......TTT......","....TTYTYTT....","...TYTTTTTYT...","..TTTYTYTYTTT..","..YTYTTTTTYTY..",".TTTTYTYTYTTTT.",".YTYTTTTTTTYTY.","TTTTYTYTYTYTTTT","YYYYYYYYYYYYYYY","..B.B.B.B.B.B..","..B.B.DDD.B.B..","..B.B.DDD.B.B..","..B.B.DDD.B.B..","..BBBBDDDBBBB..",".GGGGGGGGGGGGG."] },
   ],
 });

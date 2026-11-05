@@ -38,5 +38,9 @@
       caption:'Bawa pulang martabak, urusan rumah aman.',
       pal:{ C:'#D9962F', Y:'#F7DC6F', D:'#5B3216' },
       art:["...............","..CCCCCCCCCCC..",".CYCCCDCCCYCCC.","CCCDCCCYCCCDCCC","CYCCCYCCCDCCCYC","CCCDCCCCCYCCDCC",".CCCYCCDCCCYCC.","..CCCCCCCCCCC..","CCCCCCCCCCCCCCC","YYYYYYYYYYYYYYY","DDDDDDDDDDDDDDD","YYYYYYYYYYYYYYY","CCCCCCCCCCCCCCC","...............","..............."] },
+    { id:'kerupuk', name:'Kerupuk', bg:'#B5502B',
+      caption:'Sepiring nasi tanpa kerupuk rasanya kayak chat cuma dibaca.',
+      pal:{ C:'#FBF0CF', P:'#D9A860' },
+      art:["...C.CC...","..CPPPPCC.",".CPCCCCPC.","CCPCPPCPCC",".CPCPCCPC.","CCPCPPPPCC",".CPCCCCCC.","CCCPPPPPC.",".CCCCCCCC.","..CC.C...."] },
   ],
 });
