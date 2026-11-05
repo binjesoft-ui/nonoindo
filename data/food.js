@@ -50,5 +50,9 @@
       caption:'Kulitnya kayak ular, sepet dikit tapi nagih.',
       pal:{ B:'#7A3E1E', K:'#4F2410', Y:'#A9582A' },
       art:["....KK....","...BBBB...","..BYBBYB..","..KBYBYK..",".BBKBKBB..",".BYBKBYB..",".BKBYBKB..","..BKBKB...","...BYB....","....B....."] },
+    { id:'pisang-goreng', name:'Pisang Goreng', bg:'#2F7F86',
+      caption:'Satu buat tes rasa, lima buat tes iman.',
+      pal:{ Y:'#F2B632', O:'#C97A1E', D:'#7E4413', W:'#FBF3DE', G:'#4E9A34', P:'#FBE8A0' },
+      art:["...............","...............","....OOOOOOO....","..OOYDYYYDYOO..",".OYYPPPPPPPYYO.",".OYDYYYDYYYDYO.","..OOYYYYYDOOO..","...DOOOOOOOD...",".OOYYO...OYYOO.","OYDPPYO.OYPPDYO","OYYPPYDYDYPPYYO",".OYYDYO.OYDYYO.","..DOOOD.DOOOD..","GGGGGGGGGGGGGGG",".WWWWWWWWWWWWW."] },
   ],
 });

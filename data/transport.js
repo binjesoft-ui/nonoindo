@@ -9,5 +9,9 @@
       caption:'Abangnya santai, penumpangnya yang deg-degan.',
       pal:{ R:'#D22B2B', Y:'#F2C230', B:'#3A62A8', K:'#2B2B2B' },
       art:["...............","..RRRRRRR......",".RYYYYYYYR.....",".R.......R.....",".R.......R..KK.",".R..BBBBBR...K.",".R.BBBBBBR..KK.",".RRRRRRRRRRRK..",".RRRRRRRRRRRK..","....K......K...","...KKK.....KKK.","..K.K.K...K.K.K","..KKKKK...KKKKK","..K.K.K...K.K.K","...KKK.....KKK."] },
+    { id:'sepeda-ontel', name:'Sepeda Ontel', bg:'#F6D98B',
+      caption:'Tua-tua begini, boncengannya sudah angkut tiga generasi.',
+      pal:{ K:'#2B2B2B', R:'#8E2C20', D:'#5B3A1E', S:'#9EA3A8' },
+      art:[".......RR.",".DDD...R..","..R....R..","..RRRRRR..","...R...R..","...R..R.R.",".KK.RR.KK.","K..KR.K.RK","K..K..K..K",".KK....KK."] },
   ],
 });

@@ -25,5 +25,13 @@
       caption:'Atapnya gagah, padinya aman, tikus gigit jari.',
       pal:{ K:'#5B3A1E', O:'#A8682E', Y:'#E5B94A', D:'#2E1D10', W:'#F7EBD0' },
       art:[".......D.......","......KKK......",".....KOKOK.....","....KOKOKOK....","...KOKOKOKOK...","..KOKOKOKOKOK..",".KOKOKOKOKOKOK.","KKOKOKOKOKOKOKK","..KOKOKOKOKOK..","...YYYYYYYYY...","...WYWYWYWYW...","..DDDDDDDDDDD..","...D.......D...","...D.YY.YY.D...","..DDD.....DDD.."] },
+    { id:'gunung-agung', name:'Gunung Agung', bg:'#F7B267',
+      caption:'Atapnya Bali, puncaknya bikin betis minta cuti.',
+      pal:{ K:'#3C3F52', S:'#6A6E85', G:'#3E8E41', L:'#8BC34A', W:'#FFF7E6', D:'#7A4B26' },
+      art:[".......K.......","..WW..KKK......",".WWWW.KSK...WW.",".....KKSKK.WWWW",".....KSKSK.....","....KKSKKKK....","....KSKKKSK....","...GKSKKKKSG...","...GGKKKKKGG...","..GGLGGKGGLGG..","..GGGGLGGGGGG..",".GLGGGGGGLGGGG.",".GGGLGGLGGGGLG.","GGGGGGGGGGGGGGG","LLLLLLLLLLLLLLL"] },
+    { id:'tongkonan', name:'Tongkonan', bg:'#A9DCE8',
+      caption:'Atapnya kayak perahu, mudik ke Toraja berasa mau berlayar.',
+      pal:{ K:'#2A211C', R:'#A92B23', Y:'#E6B422', W:'#F4EEDD', B:'#6B3F1D' },
+      art:["KK...........KK",".KKK.......KKK.",".KKKKK...KKKKK.","..KKKKKKKKKKK..","...KKKKKKKKK...","....YRWRWRY....","...RRYRYRYRR...","...RWRRRRRWR...","...RRYRWRYRR...","...YYYYYYYYY...","....B.B.B.B....","....B.B.B.B....","....BBBBBBB....","....B.B.B.B....","...KK.K.K.KK..."] },
   ],
 });
