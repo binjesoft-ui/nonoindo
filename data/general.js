@@ -9,5 +9,13 @@
       caption:'Kulkas zaman dulu, tanpa tagihan listrik.',
       pal:{ T:'#B85C33', D:'#7A3A1E', L:'#D98A5E' },
       art:["...DDD....","....T.....","....T...T.","...TTT.TT.","..TTTTTTT.",".TTLLTTT..",".TDDDDDT..","..TTTTT...","...TTT....","..DDDDD..."] },
+    { id:'keris', name:'Keris', bg:'#2B4A8F',
+      caption:'Disimpan di lemari, ceritanya ke mana-mana.',
+      pal:{ S:'#7D8794', L:'#C9D1D9', Y:'#D4A62A', B:'#6B3F1D' },
+      art:[".......S.......",".......SS......","......SSL......",".....SSL.......",".....SLLS......","......SLLS.....",".......SLS.....",".......SSL.....","......SSL......",".....SLSS......",".....YYYYY.....","...YYYYYYYY....",".....BBB.......",".....BBB.......","......BB......."] },
+    { id:'gong', name:'Gong', bg:'#F3E3C0',
+      caption:'Sekali dipukul, satu gedung langsung diam.',
+      pal:{ W:'#7A4B26', R:'#B3261E', Y:'#E0B22E', D:'#B8860B', B:'#F6D95C' },
+      art:["WWWWWWWWWWWWWWW","W.....R.R.....W","W....YYYYY....W","W...YYYYYYY...W","W..YYDDDDDYY..W","W..YDDBBBDDY..W","W..YDBBBBBDY..W","W..YDBBBBBDY..W","W..YDDBBBDDY..W","W..YYDDDDDYY..W","W...YYYYYYY...W","W....YYYYY....W","W.............W","WW...........WW","WWW.........WWW"] },
   ],
 });

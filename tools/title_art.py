@@ -1,10 +1,20 @@
+import os
 import random
 from PIL import Image, ImageDraw
 
 W, H, SCALE = 135, 240, 8
 random.seed(17)
-img = Image.new('RGB', (W, H))
-d = ImageDraw.Draw(img)
+LAYERS = {}
+
+
+def begin_layer(name):
+    global img, d
+    img = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    LAYERS[name] = img
+
+
+begin_layer('sky')
 
 
 def R(x, y, w, h, c):
@@ -13,7 +23,7 @@ def R(x, y, w, h, c):
 
 def P(x, y, c):
     if 0 <= x < W and 0 <= y < H:
-        img.putpixel((x, y), c)
+        img.putpixel((x, y), tuple(c) + (255,))
 
 
 def hexc(s):
@@ -46,6 +56,8 @@ for y in range(cy - rad, cy + rad):
             if y > cy + 2 and (y - cy) % 7 < 2:
                 continue
             P(x, y, hexc('#FFE27A') if y < cy - 8 else hexc('#FFC93C'))
+
+begin_layer('city')
 
 # Far skyline
 FAR = hexc('#6A3F9E')
@@ -107,6 +119,8 @@ R(0, 218, W, 22, hexc('#A89FC2'))
 for x in range(4, W, 16):
     R(x, 218, 1, 22, hexc('#8D84AB'))
 
+begin_layer('bus')
+
 # Bus in the middle lane (generic, no logo)
 BODY, STRIPE, GLASS, DARK = hexc('#E8EEF5'), hexc('#E23A2E'), hexc('#6FB7D8'), hexc('#1B1646')
 bx, by = 42, 170
@@ -125,6 +139,8 @@ R(bx, by + 24, 74, 3, hexc('#8D95A5'))
 for wx in (bx + 8, bx + 58):
     R(wx, by + 24, 10, 7, DARK)
     R(wx + 3, by + 26, 4, 3, hexc('#BEC3C8'))
+
+begin_layer('stall')
 
 # Warung stall on the left foreground, with the three puzzle foods on the sign
 PAL = {'W': '#F7F7F2', 'G': '#BEC3C8', 'R': '#CD322D', 'B': '#825537', 'b': '#A5734B', 'Y': '#F0BE3C',
@@ -174,6 +190,8 @@ for tx in (sx + 27, sx + 33, sx + 39):
 # Shadow
 R(sx + 2, sy + 38, 44, 2, hexc('#7E76A0'))
 
+begin_layer('ojol')
+
 # Ojol rider in the foreground lane
 ox, oy = 96, 203
 TIRE, GREEN, SKIN, HELM = hexc('#1B1646'), hexc('#2FA36B'), hexc('#C68A5E'), hexc('#FFF9E8')
@@ -197,6 +215,8 @@ R(ox + 9, oy - 3, 5, 1, GREEN)
 R(ox + 1, oy, 7, 9, hexc('#247F54'))
 R(ox + 2, oy + 1, 5, 1, hexc('#2FA36B'))
 
+begin_layer('parkir')
+
 # Tukang parkir on the far sidewalk
 tx, ty = 122, 150
 R(tx + 1, ty + 1, 6, 5, SKIN)
@@ -210,7 +230,7 @@ R(tx + 1, ty + 17, 2, 8, hexc('#2D2470'))
 R(tx + 5, ty + 17, 2, 8, hexc('#2D2470'))
 P(tx - 3, ty + 2, hexc('#FFCB2E'))
 
-clean = img.copy()
+begin_layer('title')
 
 # Title in a chunky 5x7 pixel face
 FONT = {
@@ -238,5 +258,15 @@ def word(text, y, s, gap):
 
 word('NONO', 22, 4, 3)
 word('INDO', 56, 4, 3)
-for name, im in (('assets/title.png', img), ('assets/title_clean.png', clean)):
-    im.resize((W * SCALE, H * SCALE), Image.NEAREST).save(name)
+LAYERS['city'].alpha_composite(LAYERS.pop('parkir'))
+clean = Image.new('RGBA', (W, H))
+for name in ('sky', 'city', 'bus', 'stall', 'ojol'):
+    clean.alpha_composite(LAYERS[name])
+full = clean.copy()
+full.alpha_composite(LAYERS['title'])
+
+for name, im in (('assets/title.png', full), ('assets/title_clean.png', clean)):
+    im.convert('RGB').resize((W * SCALE, H * SCALE), Image.NEAREST).save(name)
+os.makedirs('assets/title_layers', exist_ok=True)
+for name, im in LAYERS.items():
+    im.save(f'assets/title_layers/{name}.png', optimize=True)

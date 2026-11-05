@@ -1,0 +1,143 @@
+#,Subject,Category,Grid size
+1,Kerupuk,Food and drink,10x10
+2,Telur balado,Food and drink,10x10
+3,Cabai,Food and drink,10x10
+4,Rambutan,Food and drink,10x10
+5,Salak,Food and drink,10x10
+6,Manggis,Food and drink,10x10
+7,Kelapa muda,Food and drink,10x10
+8,Durian,Food and drink,10x10
+9,Sate,Food and drink,15x15
+10,Ketupat,Food and drink,10x10
+11,Bakso,Food and drink,15x15
+12,Martabak,Food and drink,15x15
+13,Pisang goreng,Food and drink,15x15
+14,Klepon,Food and drink,15x15
+15,Onde-onde,Food and drink,15x15
+16,Es cendol,Food and drink,15x15
+17,Kopi tubruk,Food and drink,15x15
+18,Cobek and ulekan,Food and drink,15x15
+19,Tumpeng,Food and drink,15x15
+20,Nasi goreng with egg,Food and drink,15x15
+21,Gado-gado,Food and drink,15x15
+22,Rendang,Food and drink,15x15
+23,Gerobak bakso,Food and drink,15x15
+24,Cicak,Animals,10x10
+25,Tokek,Animals,10x10
+26,Kura-kura,Animals,10x10
+27,Ikan koi,Animals,10x10
+28,Ayam jago,Animals,10x10
+29,Orangutan,Animals,15x15
+30,Komodo,Animals,15x15
+31,Cendrawasih,Animals,15x15
+32,Jalak Bali,Animals,15x15
+33,Tarsius,Animals,15x15
+34,Anoa,Animals,15x15
+35,Burung hantu,Animals,15x15
+36,Gajah Sumatra,Animals,15x15
+37,Badak Jawa,Animals,15x15
+38,Harimau Sumatra,Animals,15x15
+39,Babirusa,Animals,15x15
+40,Maleo,Animals,15x15
+41,Elang Jawa,Animals,15x15
+42,Pesut Mahakam,Animals,15x15
+43,Hiu paus,Animals,15x15
+44,Melati,Plants,10x10
+45,Daun pandan,Plants,10x10
+46,Daun sirih,Plants,10x10
+47,Anggrek bulan,Plants,15x15
+48,Pohon kelapa,Plants,15x15
+49,Bambu,Plants,15x15
+50,Padi,Plants,15x15
+51,Pohon pisang,Plants,15x15
+52,Rafflesia arnoldii,Plants,15x15
+53,Bunga bangkai,Plants,15x15
+54,Pohon beringin,Plants,15x15
+55,Monas,Landmarks and places,15x15
+56,Jam Gadang,Landmarks and places,15x15
+57,Gunung Bromo,Landmarks and places,15x15
+58,Gunung Agung,Landmarks and places,15x15
+59,Borobudur,Landmarks and places,15x15
+60,Prambanan,Landmarks and places,15x15
+61,Pura Ulun Danu Beratan,Landmarks and places,15x15
+62,Pura Tanah Lot,Landmarks and places,15x15
+63,Masjid Istiqlal,Landmarks and places,15x15
+64,Lawang Sewu,Landmarks and places,15x15
+65,Jembatan Ampera,Landmarks and places,15x15
+66,Raja Ampat,Landmarks and places,15x15
+67,Danau Toba,Landmarks and places,15x15
+68,Danau Kelimutu,Landmarks and places,15x15
+69,Honai (Papua),Traditional houses and buildings,15x15
+70,Lumbung padi (Bali),Traditional houses and buildings,15x15
+71,Rumah Gadang (Minangkabau),Traditional houses and buildings,15x15
+72,Tongkonan (Toraja),Traditional houses and buildings,15x15
+73,Joglo (Jawa),Traditional houses and buildings,15x15
+74,Rumah Lamin (Dayak),Traditional houses and buildings,15x15
+75,Candi Bentar (Bali gate),Traditional houses and buildings,15x15
+76,Peci,Culture and crafts,10x10
+77,Gasing,Culture and crafts,10x10
+78,Congklak,Culture and crafts,10x10
+79,Kipas,Culture and crafts,10x10
+80,Keris,Culture and crafts,15x15
+81,Kujang,Culture and crafts,15x15
+82,Batik kawung pattern,Culture and crafts,15x15
+83,Batik parang pattern,Culture and crafts,15x15
+84,Blangkon,Culture and crafts,15x15
+85,Topeng Betawi,Culture and crafts,15x15
+86,Kebaya,Culture and crafts,15x15
+87,Sarung,Culture and crafts,15x15
+88,Songket,Culture and crafts,15x15
+89,Mandau,Culture and crafts,15x15
+90,Wayang kulit,Culture and crafts,15x15
+91,Barong,Culture and crafts,15x15
+92,Rangda,Culture and crafts,15x15
+93,Ondel-ondel,Culture and crafts,15x15
+94,Reog Ponorogo,Culture and crafts,15x15
+95,Penari Bali,Culture and crafts,15x15
+96,Batik mega mendung,Culture and crafts,15x15
+97,Kentongan,Musical instruments,10x10
+98,Suling,Musical instruments,10x10
+99,Angklung,Musical instruments,15x15
+100,Gong,Musical instruments,15x15
+101,Kendang,Musical instruments,15x15
+102,Rebana,Musical instruments,15x15
+103,Tifa,Musical instruments,15x15
+104,Kolintang,Musical instruments,15x15
+105,Sasando,Musical instruments,15x15
+106,Gamelan set,Musical instruments,15x15
+107,Layang-layang,Transport and street life,10x10
+108,Sepeda ontel,Transport and street life,10x10
+109,Becak,Transport and street life,15x15
+110,Bajaj,Transport and street life,15x15
+111,Delman,Transport and street life,15x15
+112,Sampan,Transport and street life,15x15
+113,Angkot,Transport and street life,15x15
+114,Ojek,Transport and street life,15x15
+115,Kereta api,Transport and street life,15x15
+116,Pinisi,Transport and street life,15x15
+117,Kapal jukung,Transport and street life,15x15
+118,Gerobak sate,Transport and street life,15x15
+119,Gayung,Everyday and nostalgic items,10x10
+120,Kemoceng,Everyday and nostalgic items,10x10
+121,Sapu lidi,Everyday and nostalgic items,10x10
+122,Termos,Everyday and nostalgic items,10x10
+123,Kendi,Everyday and nostalgic items,10x10
+124,Kaleng biskuit,Everyday and nostalgic items,10x10
+125,Rice cooker,Everyday and nostalgic items,15x15
+126,Kipas sate,Everyday and nostalgic items,15x15
+127,Bakul nasi,Everyday and nostalgic items,15x15
+128,Tikar,Everyday and nostalgic items,15x15
+129,Kompor minyak,Everyday and nostalgic items,15x15
+130,Warung,Everyday and nostalgic items,15x15
+131,Ember and gayung bathroom scene,Everyday and nostalgic items,15x15
+132,Ruang tamu warung kopi,Everyday and nostalgic items,15x15
+133,Bendera Merah Putih,National symbols and celebrations,10x10
+134,Bambu runcing,National symbols and celebrations,10x10
+135,Peta Indonesia,National symbols and celebrations,15x15
+136,Lomba makan kerupuk,National symbols and celebrations,15x15
+137,Ketupat Lebaran,National symbols and celebrations,15x15
+138,Lampion Imlek,National symbols and celebrations,15x15
+139,Panjat pinang,National symbols and celebrations,15x15
+140,Ogoh-ogoh,National symbols and celebrations,15x15
+141,Karapan sapi,National symbols and celebrations,15x15
+142,Pawai 17 Agustus,National symbols and celebrations,15x15

@@ -57,6 +57,42 @@ for (const p of PUZZLES) {
   p.cols = bin[0].map((_, c) => runs(bin.map(r => r[c])));
 }
 
+// Original NonoIndo title music: a gentle gamelan-style loop in a pelog-like scale.
+const GAMELAN = (() => {
+  const HZ = { C4:261.63, E4:329.63, F4:349.23, G4:392, B4:493.88, C5:523.25, E5:659.26 };
+  const MELODY = (
+    'G4 B4 C5 B4  G4 F4 E4 F4  G4 B4 G4 F4  E4 C4 E4 F4  G4 G4 B4 C5  B4 G4 F4 G4  E4 F4 G4 B4  G4 F4 E4 -  ' +
+    'C5 C5 B4 G4  B4 C5 E5 C5  B4 G4 F4 E4  F4 G4 B4 G4  G4 B4 C5 B4  G4 F4 E4 F4  C4 E4 F4 G4  F4 E4 C4 E4'
+  ).trim().split(/\s+/);
+  const BPM = 84, BEAT = 60 / BPM;
+  const tone = (ctx, out, hz, t, vol, dur) => {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.frequency.value = hz;
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain).connect(out);
+    osc.start(t);
+    osc.stop(t + dur + 0.02);
+  };
+  const strike = (ctx, out, hz, t, vol, dur) => {
+    tone(ctx, out, hz, t, vol, dur);
+    tone(ctx, out, hz * 2.76, t, vol * 0.22, dur * 0.3); // Metal bars ring with a non-harmonic overtone.
+  };
+  const play = (ctx, out, beat, t) => {
+    const i = beat % MELODY.length, note = HZ[MELODY[i]], next = HZ[MELODY[(i + 1) % MELODY.length]];
+    if (i % 32 === 0) {
+      tone(ctx, out, 65.4, t, 0.34, 4.5);
+      tone(ctx, out, 66.7, t, 0.24, 4.5); // Two close pitches give the gong its slow wobble.
+    }
+    if (note) strike(ctx, out, note, t, 0.17, 1.2);
+    if (note) strike(ctx, out, note * 2, t, 0.045, 0.45);
+    if (next) strike(ctx, out, next * 2, t + BEAT / 2, 0.04, 0.4);
+    if (i % 4 === 3 && note) tone(ctx, out, note / 2, t, 0.15, 1.7);
+  };
+  return { play, BEAT, LENGTH: MELODY.length };
+})();
+
 class Board {
   constructor(puzzle, grid) {
     this.puzzle = puzzle;
@@ -117,9 +153,15 @@ class Board {
 </script>
 
 <script>
-const TITLE_PNG = 'data:image/png;base64,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';
-const titleImage = new Image();
-const titleReady = new Promise(res => { titleImage.onload = titleImage.onerror = res; titleImage.src = TITLE_PNG; });
+const VERSION = '0.3.0';
+const TITLE_LAYERS = {"sky": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAEuElEQVR42u3dvWtVZxwH8N95uBiTTFZFS0ERKkI0KPiySodIa6Bx6iAuQofOZqmVDkVCXbpnKDjYKYM4aCkK/gGthRZfoCjUFkTBviyNaatwO9gXuc2tBHN7n+c5n8/yRQh6znO+9/eccxJMs+nguW7AMpIlGLz508eKPJbG5MDkyOQT++DyVDHHbHJgcqAcKEf7njKKK0fti/fO+5+0upjV3JDOnz421ItZI08ruOcoRU7vQZQjsz1/86ErthUK2FbWj62LiAgpezP9+OjnWD+2LmR++eDy1FD//ZTDQsydnFaIZXLzoStDXadm08FzXRdCZjs52pY3L+wr4jhX5Z5j/vQxC76C3HnkWhHH2Uy8cdGj7IDdvLAvdh655g1pDuZOTr/wxVxNJRYjIkwOvD43HZUjvwUelFMfXrKtYFshw4lqcmByoBwoh6eY8BIMk4N8y7FtzVhI2Ztp25qx+Pb3RyFlbyYLIfulySFNjhxz7uR01sfXTM9c7bpQcrlspmeues+B9xyD8vbsa3W+ITU5MDkovxy1jujSXFyYsK1gW0E5WM1t27aCyYFyoBwoB8Mtx+5YiogIKXszfR2jsTuWQsreTBZC9kuTQ5oc0uSQq5jNezOXBvr6fP/s4fjio0///vPcwt449daXnhMz0u+aDLwceAlGwfbPHm5XOeYW9q7q19Xs2W3ftoJtBeVAOVAOlAPlQDlQDpQDIiLSgbgfERFS9mb6PF6OA3E/pOzNZCFkvzQ5pMkhV57NhZmPfcsej7IoB8qBcqAcKAfKgXKgHCgHKAfKgXIw0HLsGb8VUvZm2jN+K75anAgpezNZCNkvTQ5pcsiVZ3P36Ak/JohHWZQD5UA5UA6UA+VAOSqz9cxai/CMjou/sq/57t1flcM0eP7fV3tROkrx4v9GrSXpKIRpUv0NaS43kzXd1KYNO+5ERESpufXM2uwuyLPHVPL6ph++eTU27LgTJWbun9KtZ9ZGyeubFENB+mVz9+iJbkkHPH58V7F7+OLZGyaHYixv/PiusibHLx+82S1lYWuxePaGR1m85zA1Kj2fZCGdV5HlqLUYpZyfew7KK0ftU6OE80wWzPnaVlAOKi5H27aUnM/b5KCMcrR1auR6/iYH/12OkcmlyCGJyOl6NI/PT3V/uz4aI5NLMcwcf/0nrfjT4mcvDf16jEwuRcqhGCbHvydHDtcl5XIg/COXD6zJYXL0zebx+aksfkyw84qC/OXJvVGPsngJhnKgHO43lKONN2DYVlAOlAPlQDkI/2GcJxaTA5PDy7AqJ2jqbN/49MJkkq3/tGZ0PdKT2w+js31j5JBE5HQ9Ui4H0tm+sfU3pU/ujUZO1yOrydH2rSWrD2p2k+P2w4ixLU8nSBszsw9q071+1C8dpqDfmvDo+/ZdibEtXoKVulBtPN9kwZyn1+dUVo7ap0fm59exgNhWqPgXANb0eFvINEwW1HnUsa2UXpDCjr9T7AKXtM0UWurkU+g46/yN1B5zTQ5MjjoedyuaZp1qX0f/n0WpdHvrRFT+fYtBlqTye55ORIu+Jb4aRXETDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQ/cHfG+EQsNWnCoAAAAASUVORK5CYII=", "city": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAFeklEQVR42u3dPYgcZRwH4HePQYSAhcUp7GmRs4nERbAQi2BIcYiFwUKIcifEwsImVhYWgpZWBkSwMUKCH1VMoeSuOBWLK+zOoIW5K6IL5gghiN4dNmshe5mMM7Ozezu7szPPA4HsZfbj3ve3//djZjchAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA0Ei9G2/3tMJdc5oA4VA9GNVf777QEwyVI9WRs8dVDuFAOBAOytPSBCEsLiz/b56x9fullsoBwpEtWSVUDeFAOBAOhAPhQDgQDoQD4UA4EA4QDoQD4UA4EA6Eg/qFoz2/1GvPL/Wacg1p2jWlwgHCQRFR2hCSN7wkf9bdWXMxblPCkdbZ/VD0/y15m4aEo4hkSARFOEJelVFNhEM1aXo4sialyZ+ndX5aNRGUGoUj2ZFZE1LDjmFl4BBSpMOzgiUsNQvHG89+ck8HXwnh4PbpY2cKP85H37/WMvTUfEIaD8SVX74YKiTmKA1YrSSD0g/JOIIiLDUJxziqSd6kOPnvySEuOWzp4uHE2zmaxBMeppoMCssowaPYubJoki8mWU0Os7xNVo548Joor4Jmtc+gdo+m9cucPnbmoOyPYyKaVjniq6imzF+y3iTx9ik63EZV+IXKWrFk3T9ZTvf/2Tn4+/33zYcQ/rsarKrfDZY2HJQxvEaDylH8iYscW1ZQxvmOjz9O8pLAeFCK7ASP4zUNewlm2nOW0TdRqLC8FUtZQ0O/coRQ7FsFx3FtbVWHuUqHo0hVmfZqpc7zl2hWX7jVSvlzmWjWl2jDrlbstBa/HjiqcwPkXQ8bn4DG5xllBngaO7dpFbU9v9Qr8iaZmXD80N0c6vgT7U6hwCwuLPfiK5S861iqXAWK7G9MZJ9j2I7K66wqyKoc/dXKoBXJMB1Txsqnu7PWatxStsrDU5FhJSs0WSHo7qy1nnjszaE6+afrH7RmarWyeXkndF6cb3yosipH1c8W98NeSjgEox4rwJkbVrKqkmo12gm5vCoXTaszx12VmhKMrPbMWyTc/vPnQuFJBqT0cHg3T689Nz9fD52XT4UHH3g8hBDCx6/fTj3u0tcnQ62/gmHz8o7kJNph49snMwNRidXKpOYCVa9Q8bKftVw90e4MvYfUn1z27zfOdih9tZL3YidxfQihmd/sEy+howwrg777q4zvBpvk8NfZuxM6e3fCxsp22FjZPrid/PP+qa/SK8coW+FV2RArWqFmdUI57WV6I1crw1SE/rHTvJ50Wm0Y2Uia3j5FGe0df8xnLh69u3JZ2R76ZGpkT2J6VSCvvUcNUdZxR84ez7/jxV1nZesWoqL+vnBtwBFHpz+slD0BNqyM7zFrP6yMazma9jijTFKnNazM1D6H7e5qLtPj/TKX1Ulld944fmEBK7df5g5zCvywO5TO+Ib6fqhpXKXP/kr54nseRS+ampvVLeUsu/u3wu7+rbC6tV76/5uyuLDcW1xY7q1urYfVrfWJnA+a5EVTc1U8IWaiWY12m3NCrD4n6JyyZ2Ja77z1ae/RRx4ufIcbv/0RHD+bx58/fzWEEMK5c8+l3k4er3JgWMFnZckRHz7SbqscGFYQDspcyi6/9J7PjpA+If11+7pWwLCCcCAcCAfCgXAgHAgHwoFwgHAgHAgHwoFwIBwIB8KBcCAcIBzka+3dvJr50YSTz3+We+fvvnml0JN4nNl8HJWD7Mrx9FOv+lAT5hwIB8KBcCAcCAfCgXAgHAgHCAfFtHo/dpxbQeVgONGX1z685wfd7s3Qbj808gO6f33ur3JgWEE4EA6EA+FAOBAOhAPhQDhAOBAOhAPhQDgQDoQD4UA4EA448C8xBdnqFl+XiAAAAABJRU5ErkJggg==", "bus": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAABv0lEQVR42u3bsUrDQBwH4Gtxc3MQQeqig5O4CT6Ak4OgIFKkDyAo1EG6KLp0E/QNioug4uDmAwhu0qmDLoogDm7OdVCKHWoSjbRpv29KSbjcXX78kx5JCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwz3JZ6uzL23vTJetsbGQ41euZF4z+kfYc5U0pwkFiQ1nsdPX2KfKYu8ZDa/u+ehSmKltt+2enJ1vb56XNsFI7jmwzreOS9C1Oe5W5gsqB2wrCgXAgHAgHwgHCgXAgHISBXz6Ps1y8+m2JOqqNSuMy3nlTOi5J35KcV+VAOBAOhAPhIHjBuAse52e8QxrDxE09p3IQrHMQS+F08at01D1zoHK0nBV3ftx/uF+L1U55r9TT4/z1OK78W0Hl+JuTi4O23+vLu8bRz+Eori2lUo6j2snKbaXTOLY3BjAcUR8Jj48uNLvxsXHaemkcmfrKPo1JfX69zhmHB1IAAAAAAAAAAAAAAAAAAAAAAAAAAODTB7USXGj/ha4+AAAAAElFTkSuQmCC", "stall": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAADoklEQVR42u3bQWgcVRwH4P+IpR5aGjBoQYxCg21TswdREGswVoi5SEVCoBWtVNCIB9umBk89FA9haTUexPYi5qAF6UFzkBqwtsStFvWSaFrFIkQEIxEW9KCEsB7KbnfN7HZXJJnI91123ps3kyXvl/fmzUwiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhpSXlj7oFcKa3B7Z9Oph7408N9kaX2yfrNie78b93gV4BwIBwIB8KBcJDtcHRcmF62FOy4MJ2kLRGT9ZuT1Wqf2zFqGbtaujsPlLo7D5R8P0wr1HVjvR233dLX0l/nz79OJitxDBkIR0TEpeN/VLY/6ToVj8zuWbYdEbF9eENl+/Dkkbrn6//+/Thz12BERBzrO1qpb99zIrX921O7Y3/Ph5XywqkhPZa1aWVsYilmRgcr5ZnRwRibWGrpB80f3Bvjb33QsM3JQxtbqmeVwzE2sRRbOtojIuLZ/I815WYDMn9wb1xZWKwZQZoNiGBkdFopuzK30LB8vWBERGxpXxe3vv7e1REkIiK2LWv7/Gu/x8lDG68FYupaPRkLx7qBM/HyQBNnGR5oOGJUB6NcrqcchPO7n444tikeEozsTiuzO3fWfNara2bEqC7Xky/2Rr7YGxfH5+Li+Fzki716KYvhWDzdH12FQkRE5bN6u6tQiMXT/Q2vMapHjHK5UTC2vXEptZ4MjhxpnX+9ffteeLzlEaPs8kvbK9tpQSFjS9m0ENQLxtDWXMMRY2hrrtKmnnIoqoNCRlcrERGffzVbU763Qds7H3s1hiIiPvomdf+J76ZT60fazkW+2LssFCNt5/RU1sJRfecz4p93PjekHtN5x0DLX6L6zuf+lCVuhDujsRaeepb++qXUTF2zvr6nu9RqvaeysbL/mlAdjoiImR/GkoiI42+++686YvjFJxu+Y1E8+2ApIqJt12dJK/U9z12d0Mrfj1UMR0TE2akvWgrIrp77G3bcx/s6as736Phc0kr94cITwuF9DoQD4WCNXnOUvsytyRVAct+0aw8jB8JBdpeym+5+pXTTzTtSG//527eRlX3z558ynRg5EA6EA+FAOBAOhAOEA+FAOBAOhAPhQDiI/9Ej+yMj76ypN8KO5p/x6N7IAQAAAAAAANn1N1jAQMjeVyuqAAAAAElFTkSuQmCC", "ojol": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAB+0lEQVR42u3av0tbURQA4POkIFSw1CENxHYSChnUVf8A54JdzejSP0BwqGi3Tl1Kd91KhS5dOnR0bwsF4U2ppepSpCh0ul0EI6nmJX1ifnzf9h6PO9x7OOfck0QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAwyWxB/0t/DtO1hzhevZFzHLP1CA66dscWDKbphw2ZA2UFZYVezL990fbu4Pt2623FVXYUze08u/Ia+3nldaasoKyMqpmNp0lwcKWJmQdt707zozA+lzlSN0FTRBn9iJ5jCL35+Tv2XjaS4EDPQfHSsRgRtcpSqlWWLmWPH8cfM5kDmYN2zcXZ82xxGI/2vmR6Dq6VmuspNdeTzDGA8s13WS/j8zDnGC2tTeTUZL3j91/zV9m/y0ooK2hI6diACo6h1zqLmJqsJ5lDn1F6ECzk1ahVqqlIEAqOAfSh8in8hxQNKZ3t7G5dPKytlrreyvJzwTEsFvJqTz+aldXDKCuECemA31bKzhxF1pM5kDn6Uf3xkxQRcfLrrOO39+7fLbxu0fW+7b/PNKR9rpuDv431AAAAAAAAgP/wF/L5ZYoUK5I3AAAAAElFTkSuQmCC", "title": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAACHElEQVR42u3dsVXDMBAA0AuPNWCEdDRZillYioaOEZJBTAEp8CMosi1bkv+vbefy3vkUSfYlAgAAAAAAAAAAAAAAUg4lLz58HIdfH/byeSh1/vjY5BfPuFYrcS/twf1BFclxPh2H8ynvTlny/KnXajVulYNiHtf8sKe3n3E2vjN/zvh5a1y/967KiaXVuFUO+qgcf42fERHP7/OzP/da1ztvyvmtxq1yIDmQHEgOJAdmK7dcXrebs+8xbpWDvtY5rnPyNefse45b5aCvFdLxvsJ4LK9Vq3GrHPRROVJjee1ajVvlQHIgOZAcSA7MVpZaP4gCaw25z272GLfKQR+VY8r6wdS1hhL7Ia3GrXJQV+WYOz7mnF/yN0QrcascAACEzj4x7Y3ypWYRpbvvzI07JxadfQgbb7FdZ6C9dN/R2YfY/QrpePdy/GZZbNQ1KGJeXP/ForMPKkdk7lamutSkjq9l13XJ7js6+2C2guRAciA5oKVnSHXfUTlQOUL3HZUDlaMRe+m+o3Kgcui+o3IgOZAcSA4kB6wzW8l9JyO1FjFnfySn+05uXDnPzursg8oRDf6b5BrrHvfEqbMPKscW42PJ7jtrjus6+wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFTvC/cFlnLMMj48AAAAAElFTkSuQmCC"};
+const titleImages = {};
+const titleReady = Promise.all(Object.entries(TITLE_LAYERS).map(([name, src]) => new Promise(res => {
+  const img = new Image();
+  img.onload = () => { titleImages[name] = img; res(); };
+  img.onerror = res;
+  img.src = src;
+})));
 
 const fontsReady = document.fonts
   ? Promise.race([
@@ -145,6 +187,8 @@ const save = store.read();
 save.best = save.best || {};
 save.grids = save.grids || {};
 save.lang = save.lang === 'en' ? 'en' : 'id';
+save.music = save.music !== false;
+save.sfx = save.sfx !== false;
 
 const I18N = {
   en: {
@@ -155,7 +199,7 @@ const I18N = {
       'Each number is the length of a run of filled squares in that row or column, in order. Runs must be separated by at least one empty square. Use Cross to mark squares you are sure are empty.',
     'Isi':'Fill','Silang':'Cross','Urungkan':'Undo','Ulang':'Reset',
     'Geser jari untuk mengisi banyak kotak sekaligus. Ketuk angka untuk mengunci satu baris atau kolom.':'Drag your finger to fill many squares at once. Tap the numbers to lock one row or column.',
-    'Ulang puzzle ini?':'Reset this puzzle?','Semua kotak akan dikosongkan.':'All squares will be cleared.','Batal':'Cancel',
+    'Ulang puzzle ini?':'Reset this puzzle?','Semua kotak akan dikosongkan.':'All squares will be cleared.','Batal':'Cancel','Suara':'Sound','Musik':'Music','Nyala':'On','Mati':'Off','Sebelumnya':'Previous','Berikutnya':'Next',
     'Selesai!':'Done!','Waktu':'Time','rekor baru':'new best','rekor':'best',
     'Main lagi':'Play again','Lihat koleksi':'View collection',
     'Bahasa':'Language','Kategori':'Categories','Segera hadir':'Coming soon',
@@ -166,16 +210,54 @@ const catName = c => c.name[save.lang] || c.name.id;
 
 // Short sounds made in the browser, so the game needs no audio files.
 const sfx = (() => {
-  let ctx = null, last = 0;
+  let ctx = null, last = 0, wanted = false, band = null, timer = null, beat = 0, nextAt = 0;
+  const running = () => ctx && ctx.state === 'running';
+  const tick = () => {
+    const now = ctx.currentTime;
+    if (nextAt < now) nextAt = now + 0.05;
+    while (nextAt < now + 0.4) {
+      GAMELAN.play(ctx, band, beat++, nextAt);
+      nextAt += GAMELAN.BEAT;
+    }
+  };
+  const stopBand = () => {
+    if (!band) return;
+    const old = band, now = ctx.currentTime;
+    clearInterval(timer);
+    old.gain.cancelScheduledValues(now);
+    old.gain.setValueAtTime(old.gain.value, now);
+    old.gain.linearRampToValueAtTime(0, now + 0.6);
+    setTimeout(() => old.disconnect(), 800);
+    band = null; timer = null;
+  };
+  const sync = () => {
+    if (!running()) return;
+    const on = wanted && save.music;
+    if (on && !band) {
+      band = ctx.createGain();
+      band.gain.setValueAtTime(0, ctx.currentTime);
+      band.gain.linearRampToValueAtTime(0.75, ctx.currentTime + 1);
+      band.connect(ctx.destination);
+      beat = 0; nextAt = ctx.currentTime + 0.1;
+      tick();
+      timer = setInterval(tick, 100);
+    } else if (!on) stopBand();
+  };
   const unlock = () => {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     if (!ctx) { try { ctx = new AC(); } catch { return; } }
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state === 'suspended') ctx.resume().then(sync);
+    else sync();
   };
   ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach(e => document.addEventListener(e, unlock, { passive: true }));
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return;
+    if (document.hidden) ctx.suspend();
+    else ctx.resume().then(sync);
+  });
   const blip = (type, from, to, dur, vol) => {
-    if (!ctx || ctx.state !== 'running') return;
+    if (!save.sfx || !running()) return;
     const now = ctx.currentTime;
     if (now - last < 0.04) return;
     last = now;
@@ -193,6 +275,8 @@ const sfx = (() => {
     [FILL]: () => blip('triangle', 300, 130, 0.1, 0.4),
     [CROSSED]: () => blip('square', 1500, 900, 0.05, 0.1),
     [EMPTY]: () => blip('sine', 520, 340, 0.05, 0.12),
+    music(on) { wanted = on; sync(); },
+    sync,
   };
 })();
 
@@ -263,18 +347,27 @@ function artTexture(scene, p) {
 class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
   create() {
-    if (titleImage.naturalWidth) {
-      if (!this.textures.exists('title')) {
-        this.textures.addImage('title', titleImage);
-        this.textures.get('title').setFilter(Phaser.Textures.FilterMode.NEAREST);
-      }
-      this.add.image(VW / 2, VH / 2, 'title').setDisplaySize(VW, VH);
+    sfx.music(true);
+    this.layers = {};
+    const names = ['sky', 'city', 'bus', 'stall', 'ojol', 'title'];
+    const complete = names.every(n => titleImages[n]);
+    if (complete) {
+      names.forEach((n, i) => {
+        const key = `title-${n}`;
+        if (!this.textures.exists(key)) {
+          this.textures.addImage(key, titleImages[n]);
+          this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+        }
+        this.layers[n] = this.add.image(VW / 2, VH / 2, key).setDisplaySize(VW, VH).setDepth([0, 3, 4, 5, 6, 8][i]);
+      });
     } else {
       label(this, VW / 2, 300, 'NonoIndo', { display: true, size: 136, color: C.yellow, shadow: 7 }).setOrigin(0.5);
     }
+    this.moving = complete && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (this.moving) this.buildAnimation();
     const bw = 300, gap = 30, bx = (VW - bw * 3 - gap * 2) / 2, by = 1760, bh = 116;
     const last = PUZZLES.find(p => p.id === save.last);
-    const style = (b, fill, color) => { b.setLook(fill, color); b.rect.setStrokeStyle(8, hex(C.ink)); b.txt.setFontFamily(DISPLAY).setFontStyle('400'); return b; };
+    const style = (b, fill, color) => { b.setLook(fill, color); b.rect.setStrokeStyle(8, hex(C.ink)); b.txt.setFontFamily(DISPLAY).setFontStyle('400'); return b.setDepth(9); };
     this.btn = {
       cont: style(button(this, bx, by, bw, bh, t('Lanjut'), () => {
         const fresh = save.best[last.id] !== undefined && !save.grids[last.id];
@@ -283,12 +376,58 @@ class TitleScene extends Phaser.Scene {
       fresh: style(button(this, bx + bw + gap, by, bw, bh, t('Baru'), () => this.scene.start('Categories'), { size: 40 }), C.paper, C.ink),
       opts: style(button(this, bx + (bw + gap) * 2, by, bw, bh, t('Opsi'), () => this.scene.start('Options'), { size: 40 }), C.paper, C.ink),
     };
+    label(this, VW / 2, by + bh + 22, `© binjesoft · v${VERSION}`, { size: 30, weight: '800', color: C.ink }).setOrigin(0.5).setDepth(9);
+  }
+
+  buildAnimation() {
+    const PX = 8;
+    // Stars twinkle at random in the dark part of the sky.
+    for (let i = 0; i < 16; i++) {
+      const star = this.add.rectangle(Phaser.Math.Between(1, 133) * PX, Phaser.Math.Between(1, 50) * PX, PX, PX, hex(C.paper)).setDepth(1);
+      this.tweens.add({ targets: star, alpha: 0.1, duration: Phaser.Math.Between(500, 1400), delay: Phaser.Math.Between(0, 1500), yoyo: true, repeat: -1 });
+    }
+    // Clouds pass behind the skyline.
+    const cloud = (y, cols) => {
+      const g = this.add.graphics().setDepth(2);
+      g.fillStyle(hex('#F7B7A3'), 0.85);
+      [[3, 0, 9], [1, 1, 15], [0, 2, 24], [5, 3, 12]].forEach(([x, r, w]) => g.fillRect(x * PX, r * PX, w * PX, PX));
+      g.y = y;
+      return { g, x: cols * PX };
+    };
+    this.clouds = [cloud(88 * PX, 30), cloud(112 * PX, 100)];
+    // Steam rises from the pot on the warung counter.
+    this.steam = [0, 1, 2, 3].map(i => ({
+      box: this.add.rectangle(0, 0, PX, PX, hex(C.paper)).setDepth(7),
+      phase: i / 4, x: (i % 2 ? 17 : 12) * PX,
+    }));
+  }
+
+  update(time, delta) {
+    if (!this.moving) return;
+    const PX = 8, snap = v => Math.round(v / PX) * PX;
+    const loop = (ms, from, to) => from + ((time % ms) / ms) * (to - from);
+    // Both vehicles drive left to right, off one edge and back in at the other.
+    this.layers.bus.x = VW / 2 + snap(loop(14000, -130 * PX, 100 * PX));
+    this.layers.ojol.x = VW / 2 + snap(loop(6000, -140 * PX, 45 * PX));
+    this.layers.ojol.y = VH / 2 + (Math.floor(time / 180) % 2 ? PX : 0);
+    this.layers.title.y = VH / 2 + snap(Math.sin(time / 800) * PX * 1.5);
+    this.clouds.forEach(c => {
+      c.x += delta * 0.03;
+      if (c.x > VW) c.x = -26 * PX;
+      c.g.x = snap(c.x);
+    });
+    this.steam.forEach(s => {
+      const p = ((time / 1800) + s.phase) % 1;
+      s.box.setPosition(s.x + snap(Math.sin(p * 9) * PX), 202 * PX - snap(p * 60));
+      s.box.setAlpha(1 - p);
+    });
   }
 }
 
 class OptionsScene extends Phaser.Scene {
   constructor() { super('Options'); }
   create() {
+    sfx.music(true);
     this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Title'), { size: 38 }) };
     label(this, MARGIN, 165, t('Opsi'), { display: true, size: 76, color: C.yellow, shadow: 5 });
     label(this, MARGIN, 330, t('Bahasa'), { display: true, size: 48 });
@@ -300,12 +439,27 @@ class OptionsScene extends Phaser.Scene {
       }, { size: 46, fill: on ? C.yellow : C.deep, color: on ? C.ink : C.paper });
       if (on) b.rect.setStrokeStyle(8, hex(C.paper));
     });
+    label(this, MARGIN, 600, t('Suara'), { display: true, size: 48 });
+    [['music', t('Musik')], ['sfx', 'SFX']].forEach(([key, name], i) => {
+      const on = save[key];
+      this.btn[key] = button(this, MARGIN + i * (w + 30), 690, w, 130, `${name}: ${t(on ? 'Nyala' : 'Mati')}`, () => {
+        save[key] = !save[key]; store.write(save); sfx.sync(); this.scene.restart();
+      }, { size: 44, fill: on ? C.yellow : C.deep, color: on ? C.ink : C.soft });
+      if (on) this.btn[key].rect.setStrokeStyle(8, hex(C.paper));
+    });
+    const py = 870, ph = 440;
+    this.add.rectangle(VW / 2, py + ph / 2, CONTENT, ph, hex(C.deep));
+    label(this, MARGIN + 40, py + 34, t('Cara main'), { display: true, size: 42, color: C.yellow });
+    label(this, MARGIN + 40, py + 100,
+      t('Angka menunjukkan panjang kotak terisi yang berurutan di baris atau kolom itu, sesuai urutannya. Antarkelompok wajib ada minimal satu kotak kosong. Pakai Silang untuk menandai kotak yang kamu yakin kosong.'),
+      { size: 38, color: C.soft, wrap: CONTENT - 80, lineSpacing: 8 });
   }
 }
 
 class CategoriesScene extends Phaser.Scene {
   constructor() { super('Categories'); }
   create() {
+    sfx.music(true);
     this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Title'), { size: 38 }) };
     label(this, MARGIN, 165, t('Kategori'), { display: true, size: 76, color: C.yellow, shadow: 5 });
     label(this, MARGIN, 255, t('Tebak gambarnya dari angka, satu kotak demi satu kotak.'), { size: 42, color: C.soft, wrap: CONTENT, lineSpacing: 8 });
@@ -326,19 +480,25 @@ class CategoriesScene extends Phaser.Scene {
   }
 }
 
+const PER_PAGE = 9;
+
 class HomeScene extends Phaser.Scene {
   constructor() { super('Home'); }
-  init(data) { this.cat = catOf(data.cat) || CATEGORIES[0]; }
+  init(data) {
+    this.cat = catOf(data.cat) || CATEGORIES[0];
+    this.pageCount = Math.max(1, Math.ceil(this.cat.puzzles.length / PER_PAGE));
+    this.page = Math.min(data.page || 0, this.pageCount - 1);
+  }
   create() {
-    const list = this.cat.puzzles;
+    sfx.music(true);
+    const all = this.cat.puzzles, start = this.page * PER_PAGE, list = all.slice(start, start + PER_PAGE);
     this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Categories'), { size: 38 }) };
     label(this, MARGIN, 165, t('Koleksi'), { display: true, size: 76, color: C.yellow, shadow: 5 });
-    label(this, MARGIN, 255, t('Tebak gambarnya dari angka, satu kotak demi satu kotak.'), { size: 42, color: C.soft, wrap: CONTENT, lineSpacing: 8 });
-    label(this, MARGIN, 400, catName(this.cat), { display: true, size: 58 });
-    const solved = list.filter(p => save.best[p.id] !== undefined).length;
-    label(this, VW - MARGIN, 410, solved + '/' + list.length, { size: 44, weight: '800', color: C.yellow }).setOrigin(1, 0);
+    label(this, MARGIN, 265, catName(this.cat), { display: true, size: 50 });
+    const solved = all.filter(p => save.best[p.id] !== undefined).length;
+    label(this, VW - MARGIN, 272, solved + '/' + all.length, { size: 44, weight: '800', color: C.yellow }).setOrigin(1, 0);
 
-    const gap = 30, w = (CONTENT - gap * 2) / 3, y0 = 490, rowH = w + 150;
+    const gap = 30, w = (CONTENT - gap * 2) / 3, y0 = 350, rowH = w + 150;
     list.forEach((p, i) => {
       const x = MARGIN + (i % 3) * (w + gap), y = y0 + Math.floor(i / 3) * rowH, has = save.best[p.id] !== undefined;
       const frame = this.add.rectangle(x + w / 2, y + w / 2, w, w, hex(C.deep)).setStrokeStyle(8, hex(C.yellow));
@@ -346,17 +506,17 @@ class HomeScene extends Phaser.Scene {
       else label(this, x + w / 2, y + w / 2, '?', { display: true, size: 130, color: C.yellow }).setOrigin(0.5);
       frame.setInteractive({ useHandCursor: true });
       frame.on('pointerup', () => this.scene.start('Play', { puzzle: p, fresh: has }));
-      label(this, x, y + w + 18, has ? p.name : 'Puzzle ' + (i + 1), { size: 38, weight: '800', wrap: w });
+      label(this, x, y + w + 18, has ? p.name : 'Puzzle ' + (start + i + 1), { size: 38, weight: '800', wrap: w });
       const note = has ? t('Rekor') + ' ' + fmt(save.best[p.id]) : (save.grids[p.id] ? t('Sedang dimainkan') : `${p.art.length}×${p.art.length}`);
       label(this, x, y + w + (has && p.name.length > 10 ? 110 : 66), note, { size: 34, color: C.soft, wrap: w });
     });
 
-    const py = Math.max(1010, y0 + Math.ceil(list.length / 3) * rowH + 20), ph = 440;
-    this.add.rectangle(VW / 2, py + ph / 2, CONTENT, ph, hex(C.deep));
-    label(this, MARGIN + 40, py + 34, t('Cara main'), { display: true, size: 42, color: C.yellow });
-    label(this, MARGIN + 40, py + 100,
-      t('Angka menunjukkan panjang kotak terisi yang berurutan di baris atau kolom itu, sesuai urutannya. Antarkelompok wajib ada minimal satu kotak kosong. Pakai Silang untuk menandai kotak yang kamu yakin kosong.'),
-      { size: 38, color: C.soft, wrap: CONTENT - 80, lineSpacing: 8 });
+    if (this.pageCount > 1) {
+      const by = 1745, bw = 340, go = page => this.scene.restart({ cat: this.cat.id, page });
+      this.btn.prev = button(this, MARGIN, by, bw, 116, t('Sebelumnya'), () => go(this.page - 1), { size: 38 }).setEnabled(this.page > 0);
+      this.btn.next = button(this, VW - MARGIN - bw, by, bw, 116, t('Berikutnya'), () => go(this.page + 1), { size: 38 }).setEnabled(this.page < this.pageCount - 1);
+      label(this, VW / 2, by + 58, `${this.page + 1}/${this.pageCount}`, { size: 44, weight: '800' }).setOrigin(0.5);
+    }
   }
 }
 
@@ -372,6 +532,7 @@ class PlayScene extends Phaser.Scene {
     this.tool = FILL; this.done = false; this.focus = null; this.keyCursor = false; this.lock = null; this.dialog = null;
   }
   create() {
+    sfx.music(false);
     const p = this.puzzle;
     this.btn = {};
     this.btn.back = button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.toHome(), { size: 38 });
@@ -597,7 +758,10 @@ class PlayScene extends Phaser.Scene {
     save.grids[this.puzzle.id] = { g: this.board.grid, t: this.elapsed };
     store.write(save);
   }
-  toHome() { this.scene.start('Home', { cat: this.puzzle.cat }); }
+  toHome() {
+    const page = Math.floor(catOf(this.puzzle.cat).puzzles.indexOf(this.puzzle) / PER_PAGE);
+    this.scene.start('Home', { cat: this.puzzle.cat, page });
+  }
 
   win() {
     this.done = true;
