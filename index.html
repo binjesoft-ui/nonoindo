@@ -38,7 +38,8 @@ const PAL = {
 const CATEGORIES = window.PACKS || [];
 const PUZZLES = CATEGORIES.flatMap(c => c.puzzles.map(p => (p.cat = c.id, p)));
 const catOf = id => CATEGORIES.find(c => c.id === id);
-const EMPTY = 0, FILL = 1, CROSSED = 2, N = 10;
+const EMPTY = 0, FILL = 1, CROSSED = 2;
+let N = 10; // Grid size of the puzzle being played; set when a puzzle opens.
 
 const runs = line => {
   const out = []; let n = 0;
@@ -84,12 +85,14 @@ class Board {
     this.grid = blankGrid();
   }
   apply(p) {
-    if (this.grid[p.r][p.c] === this.stroke.startV) this.grid[p.r][p.c] = this.stroke.paint;
+    if (this.grid[p.r][p.c] !== this.stroke.startV) return;
+    this.grid[p.r][p.c] = this.stroke.paint;
+    this.stroke.changed++;
   }
   begin(p, tool) {
     const startV = this.grid[p.r][p.c];
     this.pushUndo();
-    this.stroke = { startV, paint: startV === tool ? EMPTY : tool, last: p, origin: p, axis: null };
+    this.stroke = { startV, paint: startV === tool ? EMPTY : tool, last: p, origin: p, axis: null, changed: 0, heard: 0 };
     this.apply(p);
   }
   move(p) {
@@ -130,7 +133,7 @@ function start() {
 const VW = 1080, VH = 1920, MARGIN = 54, CONTENT = VW - MARGIN * 2;
 const BOARD_Y = 200;
 const hex = s => parseInt(s.slice(1), 16);
-const C = { blue:'#173FA3', deep:'#0F2C78', yellow:'#FFCB2E', red:'#E23A2E', paper:'#FFF9E8', ink:'#14204D', soft:'#C9D6FF', line:'#C9C2AB', hi:'#FFE9A3' };
+const C = { blue:'#173FA3', deep:'#0F2C78', yellow:'#FFCB2E', red:'#E23A2E', paper:'#FFF9E8', ink:'#14204D', soft:'#C9D6FF', line:'#C9C2AB', hi:'#FFE9A3', filled:'#2F6FDE' };
 const DISPLAY = '"Bungee", "Arial Black", sans-serif', BODY = '"Figtree", system-ui, sans-serif';
 const KEY = 'nonoindo.phaser.v1';
 
@@ -151,7 +154,8 @@ const I18N = {
     'Angka menunjukkan panjang kotak terisi yang berurutan di baris atau kolom itu, sesuai urutannya. Antarkelompok wajib ada minimal satu kotak kosong. Pakai Silang untuk menandai kotak yang kamu yakin kosong.':
       'Each number is the length of a run of filled squares in that row or column, in order. Runs must be separated by at least one empty square. Use Cross to mark squares you are sure are empty.',
     'Isi':'Fill','Silang':'Cross','Urungkan':'Undo','Ulang':'Reset',
-    'Geser jari untuk mengisi banyak kotak sekaligus.':'Drag your finger to fill many squares at once.',
+    'Geser jari untuk mengisi banyak kotak sekaligus. Ketuk angka untuk mengunci satu baris atau kolom.':'Drag your finger to fill many squares at once. Tap the numbers to lock one row or column.',
+    'Ulang puzzle ini?':'Reset this puzzle?','Semua kotak akan dikosongkan.':'All squares will be cleared.','Batal':'Cancel',
     'Selesai!':'Done!','Waktu':'Time','rekor baru':'new best','rekor':'best',
     'Main lagi':'Play again','Lihat koleksi':'View collection',
     'Bahasa':'Language','Kategori':'Categories','Segera hadir':'Coming soon',
@@ -159,6 +163,38 @@ const I18N = {
 };
 const t = k => (save.lang === 'en' && I18N.en[k]) || k;
 const catName = c => c.name[save.lang] || c.name.id;
+
+// Short sounds made in the browser, so the game needs no audio files.
+const sfx = (() => {
+  let ctx = null, last = 0;
+  const unlock = () => {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!ctx) { try { ctx = new AC(); } catch { return; } }
+    if (ctx.state === 'suspended') ctx.resume();
+  };
+  ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach(e => document.addEventListener(e, unlock, { passive: true }));
+  const blip = (type, from, to, dur, vol) => {
+    if (!ctx || ctx.state !== 'running') return;
+    const now = ctx.currentTime;
+    if (now - last < 0.04) return;
+    last = now;
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(from, now);
+    osc.frequency.exponentialRampToValueAtTime(to, now + dur);
+    gain.gain.setValueAtTime(vol, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + dur);
+  };
+  return {
+    [FILL]: () => blip('triangle', 300, 130, 0.1, 0.4),
+    [CROSSED]: () => blip('square', 1500, 900, 0.05, 0.1),
+    [EMPTY]: () => blip('sine', 520, 340, 0.05, 0.12),
+  };
+})();
 
 function label(scene, x, y, text, opts = {}) {
   const style = {
@@ -176,29 +212,48 @@ function label(scene, x, y, text, opts = {}) {
 }
 
 function button(scene, x, y, w, h, text, onClick, opts = {}) {
-  const rect = scene.add.rectangle(x + w / 2, y + h / 2, w, h, hex(opts.fill || C.deep));
+  const look = { fill: hex(opts.fill || C.deep), strokeW: 0, strokeC: 0 };
+  const gfx = scene.add.graphics();
+  const draw = () => {
+    const pad = look.strokeW / 2, rad = (h - look.strokeW) / 2;
+    gfx.clear();
+    gfx.fillStyle(look.fill, 1);
+    gfx.fillRoundedRect(x + pad, y + pad, w - look.strokeW, h - look.strokeW, rad);
+    if (look.strokeW) {
+      gfx.lineStyle(look.strokeW, look.strokeC, 1);
+      gfx.strokeRoundedRect(x + pad, y + pad, w - look.strokeW, h - look.strokeW, rad);
+    }
+  };
+  draw();
   const txt = label(scene, x + w / 2, y + h / 2, text, { size: opts.size || 42, weight: '800', color: opts.color || C.paper }).setOrigin(0.5);
-  rect.setInteractive({ useHandCursor: true });
+  const hit = scene.add.zone(x + w / 2, y + h / 2, w, h).setInteractive({ useHandCursor: true });
   const b = {
-    rect, txt, enabled: true, onClick,
-    setEnabled(v) { b.enabled = v; rect.setAlpha(v ? 1 : 0.45); txt.setAlpha(v ? 1 : 0.45); return b; },
-    setLook(fill, color) { rect.setFillStyle(hex(fill)); txt.setColor(color); return b; },
-    setVisible(v) { rect.setVisible(v); txt.setVisible(v); rect.input && (rect.input.enabled = v); return b; },
+    txt, enabled: true, onClick,
+    rect: {
+      setStrokeStyle(width, color) { look.strokeW = width; look.strokeC = color; draw(); },
+      setFillStyle(color) { look.fill = color; draw(); },
+    },
+    setEnabled(v) { b.enabled = v; gfx.setAlpha(v ? 1 : 0.45); txt.setAlpha(v ? 1 : 0.45); return b; },
+    setLook(fill, color) { look.fill = hex(fill); draw(); txt.setColor(color); return b; },
+    setVisible(v) { gfx.setVisible(v); txt.setVisible(v); hit.input.enabled = v; return b; },
+    setDepth(d) { gfx.setDepth(d); txt.setDepth(d); hit.setDepth(d); return b; },
+    destroy() { gfx.destroy(); txt.destroy(); hit.destroy(); },
     press() { if (b.enabled) onClick(); },
   };
-  rect.on('pointerup', () => b.press());
+  hit.on('pointerup', () => b.press());
   return b;
 }
 
 function artTexture(scene, p) {
   const key = `art-${p.id}`;
   if (scene.textures.exists(key)) return key;
-  const tex = scene.textures.createCanvas(key, N, N);
+  const size = p.art.length, colors = p.pal || PAL;
+  const tex = scene.textures.createCanvas(key, size, size);
   const ctx = tex.getContext();
-  ctx.fillStyle = p.bg; ctx.fillRect(0, 0, N, N);
+  ctx.fillStyle = p.bg; ctx.fillRect(0, 0, size, size);
   p.art.forEach((row, r) => [...row].forEach((ch, c) => {
     if (ch === '.') return;
-    ctx.fillStyle = PAL[ch]; ctx.fillRect(c, r, 1, 1);
+    ctx.fillStyle = colors[ch]; ctx.fillRect(c, r, 1, 1);
   }));
   tex.refresh();
   tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
@@ -292,7 +347,7 @@ class HomeScene extends Phaser.Scene {
       frame.setInteractive({ useHandCursor: true });
       frame.on('pointerup', () => this.scene.start('Play', { puzzle: p, fresh: has }));
       label(this, x, y + w + 18, has ? p.name : 'Puzzle ' + (i + 1), { size: 38, weight: '800', wrap: w });
-      const note = has ? t('Rekor') + ' ' + fmt(save.best[p.id]) : (save.grids[p.id] ? t('Sedang dimainkan') : '10×10');
+      const note = has ? t('Rekor') + ' ' + fmt(save.best[p.id]) : (save.grids[p.id] ? t('Sedang dimainkan') : `${p.art.length}×${p.art.length}`);
       label(this, x, y + w + (has && p.name.length > 10 ? 110 : 66), note, { size: 34, color: C.soft, wrap: w });
     });
 
@@ -309,11 +364,12 @@ class PlayScene extends Phaser.Scene {
   constructor() { super('Play'); }
   init(data) {
     this.puzzle = data.puzzle;
+    N = this.puzzle.art.length;
     const saved = !data.fresh && save.grids[this.puzzle.id];
     save.last = this.puzzle.id; store.write(save);
     this.board = new Board(this.puzzle, saved && saved.g);
     this.elapsed = saved ? saved.t : 0;
-    this.tool = FILL; this.done = false; this.focus = null; this.keyCursor = false;
+    this.tool = FILL; this.done = false; this.focus = null; this.keyCursor = false; this.lock = null; this.dialog = null;
   }
   create() {
     const p = this.puzzle;
@@ -330,15 +386,14 @@ class PlayScene extends Phaser.Scene {
     this.gfx = this.add.graphics().setDepth(1);
     this.buildClues();
 
-    const ty = BOARD_Y + CONTENT + 36, half = CONTENT / 2;
-    this.toolFrame = this.add.rectangle(VW / 2, ty + 70, CONTENT, 140).setStrokeStyle(8, hex(C.paper)).setDepth(1);
+    const ty = BOARD_Y + CONTENT + 36, half = (CONTENT - 30) / 2;
     this.btn.fill = button(this, MARGIN, ty, half, 140, t('Isi'), () => this.setTool(FILL), { size: 46 });
-    this.btn.cross = button(this, MARGIN + half, ty, half, 140, t('Silang'), () => this.setTool(CROSSED), { size: 46 });
+    this.btn.cross = button(this, MARGIN + half + 30, ty, half, 140, t('Silang'), () => this.setTool(CROSSED), { size: 46 });
     const ay = ty + 170, aw = (CONTENT - 30) / 2;
     this.btn.undo = button(this, MARGIN, ay, aw, 124, t('Urungkan'), () => this.doUndo());
-    this.btn.reset = button(this, MARGIN + aw + 30, ay, aw, 124, t('Ulang'), () => this.doReset());
+    this.btn.reset = button(this, MARGIN + aw + 30, ay, aw, 124, t('Ulang'), () => this.askReset());
     this.btn.undo.setEnabled(false);
-    this.note = label(this, MARGIN, ay + 150, t('Geser jari untuk mengisi banyak kotak sekaligus.'), { size: 36, color: C.soft, wrap: CONTENT });
+    this.note = label(this, MARGIN, ay + 150, t('Geser jari untuk mengisi banyak kotak sekaligus. Ketuk angka untuk mengunci satu baris atau kolom.'), { size: 36, color: C.soft, wrap: CONTENT, lineSpacing: 6 });
     this.setTool(FILL);
 
     this.input.on('pointerdown', q => this.onDown(q));
@@ -378,14 +433,18 @@ class PlayScene extends Phaser.Scene {
   paint() {
     const g = this.gfx, { cell, ox, oy } = this.geo, grid = this.board.grid;
     g.clear();
-    if (this.focus) {
+    if (this.lock) {
+      g.fillStyle(hex(C.yellow), 1);
+      if (this.lock.type === 'row') g.fillRect(MARGIN, oy + this.lock.i * cell, CONTENT, cell);
+      else g.fillRect(ox + this.lock.i * cell, BOARD_Y, cell, CONTENT);
+    } else if (this.focus) {
       g.fillStyle(hex(C.hi), 1);
       g.fillRect(MARGIN, oy + this.focus.r * cell, CONTENT, cell);
       g.fillRect(ox + this.focus.c * cell, BOARD_Y, cell, CONTENT);
     }
     for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
       const x = ox + c * cell, y = oy + r * cell, v = grid[r][c];
-      if (v === FILL) { g.fillStyle(hex(C.ink), 1); g.fillRect(x, y, cell, cell); }
+      if (v === FILL) { g.fillStyle(hex(C.filled), 1); g.fillRect(x, y, cell, cell); }
       if (v === CROSSED) {
         const m = cell * 0.28;
         g.lineStyle(Math.max(4, cell * 0.09), hex(C.red), 1);
@@ -400,6 +459,20 @@ class PlayScene extends Phaser.Scene {
         g.lineBetween(ox + i * cell, oy, ox + i * cell, oy + cell * N);
         g.lineBetween(ox, oy + i * cell, ox + cell * N, oy + i * cell);
       }
+    }
+    if (this.lock) {
+      const size = cell * N, i = this.lock.i, row = this.lock.type === 'row';
+      g.fillStyle(hex(C.paper), 0.55);
+      if (row) {
+        g.fillRect(ox, oy, size, i * cell);
+        g.fillRect(ox, oy + (i + 1) * cell, size, (N - i - 1) * cell);
+      } else {
+        g.fillRect(ox, oy, i * cell, size);
+        g.fillRect(ox + (i + 1) * cell, oy, (N - i - 1) * cell, size);
+      }
+      g.lineStyle(6, hex(C.red), 1);
+      if (row) g.strokeRect(ox, oy + i * cell, size, cell);
+      else g.strokeRect(ox + i * cell, oy, cell, size);
     }
     if (this.keyCursor && this.focus) {
       g.lineStyle(6, hex(C.red), 1);
@@ -416,19 +489,42 @@ class PlayScene extends Phaser.Scene {
     const { cell, ox, oy } = this.geo;
     return { c: Math.floor((q.worldX - ox) / cell), r: Math.floor((q.worldY - oy) / cell) };
   }
-  onDown(q) {
-    if (this.done) return;
-    const p = this.cellAt(q);
-    if (p.r < 0 || p.c < 0 || p.r >= N || p.c >= N) return;
-    this.keyCursor = false; this.focus = p;
+  inLock(p) {
+    if (!this.lock) return true;
+    return this.lock.type === 'row' ? p.r === this.lock.i : p.c === this.lock.i;
+  }
+  toggleLock(type, i) {
+    const same = this.lock && this.lock.type === type && this.lock.i === i;
+    this.lock = same ? null : { type, i };
+    this.focus = null;
+    this.paint();
+  }
+  beginStroke(p) {
     this.board.begin(p, this.tool);
+    if (this.lock) this.board.stroke.axis = this.lock.type === 'row' ? 'h' : 'v';
+  }
+  onDown(q) {
+    if (this.done || this.dialog) return;
+    const p = this.cellAt(q);
+    const inRows = p.r >= 0 && p.r < N, inCols = p.c >= 0 && p.c < N;
+    if (p.c < 0 && inRows && q.worldX >= MARGIN) return this.toggleLock('row', p.r);
+    if (p.r < 0 && inCols && q.worldY >= BOARD_Y) return this.toggleLock('col', p.c);
+    if (!inRows || !inCols || !this.inLock(p)) return;
+    this.keyCursor = false; this.focus = p;
+    this.beginStroke(p);
+    this.strokeSound();
     this.btn.undo.setEnabled(true);
     this.paint();
+  }
+  strokeSound() {
+    const s = this.board.stroke;
+    if (s.changed > s.heard) { s.heard = s.changed; sfx[s.paint](); }
   }
   onMove(q) {
     if (!this.board.stroke) return;
     const p = this.cellAt(q);
     this.focus = this.board.move({ r: Phaser.Math.Clamp(p.r, 0, N - 1), c: Phaser.Math.Clamp(p.c, 0, N - 1) });
+    this.strokeSound();
     this.paint();
   }
   onUp() {
@@ -439,7 +535,7 @@ class PlayScene extends Phaser.Scene {
     if (this.board.isWon()) this.win();
   }
   onKey(e) {
-    if (this.done) return;
+    if (this.done || this.dialog) return;
     const dir = { ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1] }[e.key];
     const clamp = v => Math.min(N - 1, Math.max(0, v));
     if (dir) {
@@ -451,21 +547,45 @@ class PlayScene extends Phaser.Scene {
       e.preventDefault();
       this.keyCursor = true;
       this.focus = this.focus || { r: 0, c: 0 };
-      this.board.begin(this.focus, this.tool);
+      if (!this.inLock(this.focus)) return;
+      this.beginStroke(this.focus);
+      this.strokeSound();
       this.btn.undo.setEnabled(true);
       this.onUp();
     }
   }
 
-  setTool(t) {
-    this.tool = t;
-    this.btn.fill.setLook(t === FILL ? C.paper : C.blue, t === FILL ? C.ink : C.paper);
-    this.btn.cross.setLook(t === CROSSED ? C.paper : C.blue, t === CROSSED ? C.ink : C.paper);
+  setTool(t2) {
+    this.tool = t2;
+    const look = (b, name, on) => {
+      b.setLook(on ? C.yellow : C.deep, on ? C.ink : C.soft);
+      b.txt.setText(on ? `✓ ${name}` : name);
+    };
+    look(this.btn.fill, t('Isi'), t2 === FILL);
+    look(this.btn.cross, t('Silang'), t2 === CROSSED);
   }
   doUndo() {
     this.board.undo();
     this.btn.undo.setEnabled(this.board.undoStack.length > 0);
     this.persist(); this.paint();
+  }
+  askReset() {
+    if (this.dialog) return;
+    const w = 860, h = 500, x = (VW - w) / 2, y = BOARD_Y + 240, bw = 355, by = y + h - 170;
+    const shade = this.add.rectangle(VW / 2, VH / 2, VW, VH, 0x000000, 0.6).setDepth(10).setInteractive();
+    const panel = this.add.graphics().setDepth(11);
+    panel.fillStyle(hex(C.deep), 1).fillRoundedRect(x, y, w, h, 40);
+    panel.lineStyle(8, hex(C.yellow), 1).strokeRoundedRect(x, y, w, h, 40);
+    const title = label(this, VW / 2, y + 110, t('Ulang puzzle ini?'), { display: true, size: 54, color: C.yellow }).setOrigin(0.5).setDepth(12);
+    const body = label(this, VW / 2, y + 210, t('Semua kotak akan dikosongkan.'), { size: 42, color: C.paper }).setOrigin(0.5).setDepth(12);
+    const close = () => {
+      [shade, panel, title, body].forEach(o => o.destroy());
+      no.destroy(); yes.destroy();
+      this.dialog = null;
+    };
+    const no = button(this, x + 50, by, bw, 120, t('Batal'), close).setDepth(12);
+    const yes = button(this, x + w - 50 - bw, by, bw, 120, t('Ulang'), () => { close(); this.doReset(); }, { fill: C.red }).setDepth(12);
+    this.dialog = { no, yes };
   }
   doReset() {
     this.board.reset();
@@ -489,7 +609,7 @@ class PlayScene extends Phaser.Scene {
     this.focus = null;
     this.titleText.setText(t('Selesai!'));
     ['fill', 'cross', 'undo', 'reset'].forEach(k => this.btn[k].setVisible(false));
-    this.toolFrame.setVisible(false); this.note.setVisible(false);
+    this.note.setVisible(false);
     this.result = isBest ? `${t('Waktu')} ${fmt(this.elapsed)} · ${t('rekor baru')}` : `${t('Waktu')} ${fmt(this.elapsed)} · ${t('rekor')} ${fmt(best)}`;
 
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -509,10 +629,10 @@ class PlayScene extends Phaser.Scene {
     const grid = this.board.grid;
     for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
       const x = c * cell + cell / 2 - half, y = r * cell + cell / 2 - half, ch = p.art[r][c];
-      const under = this.add.rectangle(x, y, cell + 1, cell + 1, hex(grid[r][c] === FILL ? C.ink : C.paper));
-      const top = this.add.rectangle(x, y, cell + 1, cell + 1, hex(ch === '.' ? p.bg : PAL[ch])).setScale(0);
+      const under = this.add.rectangle(x, y, cell + 1, cell + 1, hex(grid[r][c] === FILL ? C.filled : C.paper));
+      const top = this.add.rectangle(x, y, cell + 1, cell + 1, hex(ch === '.' ? p.bg : (p.pal || PAL)[ch])).setScale(0);
       stage.add([under, top]);
-      const d = Math.hypot(r - 4.5, c - 4.5) / 6.4;
+      const mid = (N - 1) / 2, d = Math.hypot(r - mid, c - mid) / (mid * 1.42);
       this.tweens.add({ targets: top, scale: 1, delay: d * 550, duration: 280, ease: 'Back.easeOut' });
     }
     this.gfx.clear();
