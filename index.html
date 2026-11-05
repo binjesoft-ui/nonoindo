@@ -24,22 +24,20 @@ body { background: var(--gerobak); color: var(--kertas); font: 500 16px/1.45 "Fi
 <div id="game"></div>
 <div id="fail" hidden>Game gagal dimuat. Periksa koneksi internet, lalu buka lagi halaman ini.</div>
 
+<script src="data/food.js"></script>
+<script src="data/general.js"></script>
+<script src="data/transport.js"></script>
+<script src="data/landmark.js"></script>
+<script src="data/animal.js"></script>
+
 <script id="rules">
 const PAL = {
   W:'#F7F7F2', G:'#BEC3C8', R:'#CD322D', B:'#825537', b:'#A5734B', Y:'#F0BE3C',
   S:'#AFCDE1', D:'#552D19', K:'#78411E', O:'#B95F1E', T:'#D7AA6E', I:'#E1F0F5', P:'#C8E1EB'
 };
-const PUZZLES = [
-  { id:'bakso', name:'Bakso', bg:'#F2A33A',
-    caption:'Tiga sendok sambal dulu, baru boleh ngaku kuat.',
-    art:["...S..S...","..BB..BB..",".BbBDBbBB.",".BBBDBBBB.","WWWWWWWWWW","WRWRWWRWRW",".WWWWWWWW.","..WWWWWW..","...WWWW...","...GGGG..."] },
-  { id:'sate', name:'Sate', bg:'#8FD0C4',
-    caption:'Asapnya ke mana-mana, satu RT jadi lapar.',
-    art:[".......T..","......KK..",".....KDK.T","....KKK.KK","...KDK.KDK","..KKK.KKK.",".KDK.KDK..",".TK.KKK...","WT.KDK..WW","WWWWWWWWW."] },
-  { id:'esteh', name:'Es Teh Plastik', bg:'#2F6FDE',
-    caption:'Karet gelang lepas, celana jadi korban.',
-    art:["......R...","..P...R.P.","..PP..RPP.","...PPPRP..",".....YY...","...OOOOO..","..OIOOOOO.","..OOOOIOO.","..OOIOOOO.","...OOOOO.."] },
-];
+const CATEGORIES = window.PACKS || [];
+const PUZZLES = CATEGORIES.flatMap(c => c.puzzles.map(p => (p.cat = c.id, p)));
+const catOf = id => CATEGORIES.find(c => c.id === id);
 const EMPTY = 0, FILL = 1, CROSSED = 2, N = 10;
 
 const runs = line => {
@@ -143,6 +141,24 @@ const store = {
 const save = store.read();
 save.best = save.best || {};
 save.grids = save.grids || {};
+save.lang = save.lang === 'en' ? 'en' : 'id';
+
+const I18N = {
+  en: {
+    'Lanjut':'Continue','Baru':'New','Opsi':'Options','Kembali':'Back','Koleksi':'Collection',
+    'Tebak gambarnya dari angka, satu kotak demi satu kotak.':'Guess the picture from the numbers, one square at a time.',
+    'Kuliner':'Food','Rekor':'Best','Sedang dimainkan':'In progress','Cara main':'How to play',
+    'Angka menunjukkan panjang kotak terisi yang berurutan di baris atau kolom itu, sesuai urutannya. Antarkelompok wajib ada minimal satu kotak kosong. Pakai Silang untuk menandai kotak yang kamu yakin kosong.':
+      'Each number is the length of a run of filled squares in that row or column, in order. Runs must be separated by at least one empty square. Use Cross to mark squares you are sure are empty.',
+    'Isi':'Fill','Silang':'Cross','Urungkan':'Undo','Ulang':'Reset',
+    'Geser jari untuk mengisi banyak kotak sekaligus.':'Drag your finger to fill many squares at once.',
+    'Selesai!':'Done!','Waktu':'Time','rekor baru':'new best','rekor':'best',
+    'Main lagi':'Play again','Lihat koleksi':'View collection',
+    'Bahasa':'Language','Kategori':'Categories','Segera hadir':'Coming soon',
+  },
+};
+const t = k => (save.lang === 'en' && I18N.en[k]) || k;
+const catName = c => c.name[save.lang] || c.name.id;
 
 function label(scene, x, y, text, opts = {}) {
   const style = {
@@ -201,41 +217,90 @@ class TitleScene extends Phaser.Scene {
     } else {
       label(this, VW / 2, 300, 'NonoIndo', { display: true, size: 136, color: C.yellow, shadow: 7 }).setOrigin(0.5);
     }
-    this.btn = { play: button(this, 385, 1760, 310, 116, 'MAIN', () => this.scene.start('Home'), { fill: C.yellow, color: C.ink, size: 52 }) };
-    this.btn.play.rect.setStrokeStyle(8, hex(C.ink));
-    this.btn.play.txt.setFontFamily(DISPLAY).setFontStyle('400');
-    this.tweens.add({ targets: [this.btn.play.rect, this.btn.play.txt], scale: 1.05, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const bw = 300, gap = 30, bx = (VW - bw * 3 - gap * 2) / 2, by = 1760, bh = 116;
+    const last = PUZZLES.find(p => p.id === save.last);
+    const style = (b, fill, color) => { b.setLook(fill, color); b.rect.setStrokeStyle(8, hex(C.ink)); b.txt.setFontFamily(DISPLAY).setFontStyle('400'); return b; };
+    this.btn = {
+      cont: style(button(this, bx, by, bw, bh, t('Lanjut'), () => {
+        const fresh = save.best[last.id] !== undefined && !save.grids[last.id];
+        this.scene.start('Play', { puzzle: last, fresh });
+      }, { size: 40 }), C.yellow, C.ink).setEnabled(!!last),
+      fresh: style(button(this, bx + bw + gap, by, bw, bh, t('Baru'), () => this.scene.start('Categories'), { size: 40 }), C.paper, C.ink),
+      opts: style(button(this, bx + (bw + gap) * 2, by, bw, bh, t('Opsi'), () => this.scene.start('Options'), { size: 40 }), C.paper, C.ink),
+    };
+  }
+}
+
+class OptionsScene extends Phaser.Scene {
+  constructor() { super('Options'); }
+  create() {
+    this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Title'), { size: 38 }) };
+    label(this, MARGIN, 165, t('Opsi'), { display: true, size: 76, color: C.yellow, shadow: 5 });
+    label(this, MARGIN, 330, t('Bahasa'), { display: true, size: 48 });
+    const w = (CONTENT - 30) / 2;
+    [['id', 'Indonesia'], ['en', 'English']].forEach(([code, name], i) => {
+      const on = save.lang === code;
+      const b = button(this, MARGIN + i * (w + 30), 420, w, 130, name, () => {
+        save.lang = code; store.write(save); this.scene.restart();
+      }, { size: 46, fill: on ? C.yellow : C.deep, color: on ? C.ink : C.paper });
+      if (on) b.rect.setStrokeStyle(8, hex(C.paper));
+    });
+  }
+}
+
+class CategoriesScene extends Phaser.Scene {
+  constructor() { super('Categories'); }
+  create() {
+    this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Title'), { size: 38 }) };
+    label(this, MARGIN, 165, t('Kategori'), { display: true, size: 76, color: C.yellow, shadow: 5 });
+    label(this, MARGIN, 255, t('Tebak gambarnya dari angka, satu kotak demi satu kotak.'), { size: 42, color: C.soft, wrap: CONTENT, lineSpacing: 8 });
+    const h = 190, gap = 28, y0 = 420;
+    CATEGORIES.forEach((c, i) => {
+      const y = y0 + i * (h + gap), total = c.puzzles.length, solved = c.puzzles.filter(p => save.best[p.id] !== undefined).length;
+      const card = this.add.rectangle(VW / 2, y + h / 2, CONTENT, h, hex(C.deep)).setStrokeStyle(8, hex(total ? C.yellow : C.soft));
+      label(this, MARGIN + 40, y + 28, catName(c), { display: true, size: 52, color: total ? C.paper : C.soft });
+      label(this, VW - MARGIN - 40, y + 34, total ? solved + '/' + total : t('Segera hadir'), { size: total ? 52 : 38, weight: '800', color: C.yellow }).setOrigin(1, 0);
+      if (total) {
+        const bx = MARGIN + 40, bw = CONTENT - 80;
+        this.add.rectangle(bx + bw / 2, y + 138, bw, 22, hex(C.ink));
+        if (solved) this.add.rectangle(bx + bw * solved / total / 2, y + 138, bw * solved / total, 22, hex(C.yellow));
+        card.setInteractive({ useHandCursor: true });
+        card.on('pointerup', () => this.scene.start('Home', { cat: c.id }));
+      }
+    });
   }
 }
 
 class HomeScene extends Phaser.Scene {
   constructor() { super('Home'); }
+  init(data) { this.cat = catOf(data.cat) || CATEGORIES[0]; }
   create() {
-    this.btn = { back: button(this, MARGIN, 40, 240, 110, 'Kembali', () => this.scene.start('Title'), { size: 38 }) };
-    label(this, MARGIN, 165, 'Koleksi', { display: true, size: 76, color: C.yellow, shadow: 5 });
-    label(this, MARGIN, 255, 'Tebak gambarnya dari angka, satu kotak demi satu kotak.', { size: 42, color: C.soft, wrap: CONTENT, lineSpacing: 8 });
-    label(this, MARGIN, 400, 'Kuliner', { display: true, size: 58 });
-    const solved = PUZZLES.filter(p => save.best[p.id] !== undefined).length;
-    label(this, VW - MARGIN, 410, `${solved}/${PUZZLES.length}`, { size: 44, weight: '800', color: C.yellow }).setOrigin(1, 0);
+    const list = this.cat.puzzles;
+    this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Categories'), { size: 38 }) };
+    label(this, MARGIN, 165, t('Koleksi'), { display: true, size: 76, color: C.yellow, shadow: 5 });
+    label(this, MARGIN, 255, t('Tebak gambarnya dari angka, satu kotak demi satu kotak.'), { size: 42, color: C.soft, wrap: CONTENT, lineSpacing: 8 });
+    label(this, MARGIN, 400, catName(this.cat), { display: true, size: 58 });
+    const solved = list.filter(p => save.best[p.id] !== undefined).length;
+    label(this, VW - MARGIN, 410, solved + '/' + list.length, { size: 44, weight: '800', color: C.yellow }).setOrigin(1, 0);
 
-    const gap = 30, w = (CONTENT - gap * 2) / 3, y = 490;
-    PUZZLES.forEach((p, i) => {
-      const x = MARGIN + i * (w + gap), has = save.best[p.id] !== undefined;
+    const gap = 30, w = (CONTENT - gap * 2) / 3, y0 = 490, rowH = w + 150;
+    list.forEach((p, i) => {
+      const x = MARGIN + (i % 3) * (w + gap), y = y0 + Math.floor(i / 3) * rowH, has = save.best[p.id] !== undefined;
       const frame = this.add.rectangle(x + w / 2, y + w / 2, w, w, hex(C.deep)).setStrokeStyle(8, hex(C.yellow));
       if (has) this.add.image(x + w / 2, y + w / 2, artTexture(this, p)).setDisplaySize(w - 8, w - 8);
       else label(this, x + w / 2, y + w / 2, '?', { display: true, size: 130, color: C.yellow }).setOrigin(0.5);
       frame.setInteractive({ useHandCursor: true });
       frame.on('pointerup', () => this.scene.start('Play', { puzzle: p, fresh: has }));
-      label(this, x, y + w + 18, has ? p.name : `Puzzle ${i + 1}`, { size: 38, weight: '800', wrap: w });
-      const note = has ? `Rekor ${fmt(save.best[p.id])}` : (save.grids[p.id] ? 'Sedang dimainkan' : '10×10');
+      label(this, x, y + w + 18, has ? p.name : 'Puzzle ' + (i + 1), { size: 38, weight: '800', wrap: w });
+      const note = has ? t('Rekor') + ' ' + fmt(save.best[p.id]) : (save.grids[p.id] ? t('Sedang dimainkan') : '10×10');
       label(this, x, y + w + (has && p.name.length > 10 ? 110 : 66), note, { size: 34, color: C.soft, wrap: w });
     });
 
-    const py = 1010, ph = 440;
+    const py = Math.max(1010, y0 + Math.ceil(list.length / 3) * rowH + 20), ph = 440;
     this.add.rectangle(VW / 2, py + ph / 2, CONTENT, ph, hex(C.deep));
-    label(this, MARGIN + 40, py + 34, 'Cara main', { display: true, size: 42, color: C.yellow });
+    label(this, MARGIN + 40, py + 34, t('Cara main'), { display: true, size: 42, color: C.yellow });
     label(this, MARGIN + 40, py + 100,
-      'Angka menunjukkan panjang kotak terisi yang berurutan di baris atau kolom itu, sesuai urutannya. Antarkelompok wajib ada minimal satu kotak kosong. Pakai Silang untuk menandai kotak yang kamu yakin kosong.',
+      t('Angka menunjukkan panjang kotak terisi yang berurutan di baris atau kolom itu, sesuai urutannya. Antarkelompok wajib ada minimal satu kotak kosong. Pakai Silang untuk menandai kotak yang kamu yakin kosong.'),
       { size: 38, color: C.soft, wrap: CONTENT - 80, lineSpacing: 8 });
   }
 }
@@ -245,6 +310,7 @@ class PlayScene extends Phaser.Scene {
   init(data) {
     this.puzzle = data.puzzle;
     const saved = !data.fresh && save.grids[this.puzzle.id];
+    save.last = this.puzzle.id; store.write(save);
     this.board = new Board(this.puzzle, saved && saved.g);
     this.elapsed = saved ? saved.t : 0;
     this.tool = FILL; this.done = false; this.focus = null; this.keyCursor = false;
@@ -252,8 +318,8 @@ class PlayScene extends Phaser.Scene {
   create() {
     const p = this.puzzle;
     this.btn = {};
-    this.btn.back = button(this, MARGIN, 40, 240, 110, 'Kembali', () => this.toHome(), { size: 38 });
-    this.titleText = label(this, VW / 2, 95, `Puzzle ${PUZZLES.indexOf(p) + 1}`, { display: true, size: 46, color: C.yellow }).setOrigin(0.5);
+    this.btn.back = button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.toHome(), { size: 38 });
+    this.titleText = label(this, VW / 2, 95, `Puzzle ${catOf(p.cat).puzzles.indexOf(p) + 1}`, { display: true, size: 46, color: C.yellow }).setOrigin(0.5);
     this.clock = label(this, VW - MARGIN, 95, fmt(this.elapsed), { size: 46, weight: '800' }).setOrigin(1, 0.5);
 
     const depth = Math.max(1, ...p.rows.map(c => c.length), ...p.cols.map(c => c.length));
@@ -266,13 +332,13 @@ class PlayScene extends Phaser.Scene {
 
     const ty = BOARD_Y + CONTENT + 36, half = CONTENT / 2;
     this.toolFrame = this.add.rectangle(VW / 2, ty + 70, CONTENT, 140).setStrokeStyle(8, hex(C.paper)).setDepth(1);
-    this.btn.fill = button(this, MARGIN, ty, half, 140, 'Isi', () => this.setTool(FILL), { size: 46 });
-    this.btn.cross = button(this, MARGIN + half, ty, half, 140, 'Silang', () => this.setTool(CROSSED), { size: 46 });
+    this.btn.fill = button(this, MARGIN, ty, half, 140, t('Isi'), () => this.setTool(FILL), { size: 46 });
+    this.btn.cross = button(this, MARGIN + half, ty, half, 140, t('Silang'), () => this.setTool(CROSSED), { size: 46 });
     const ay = ty + 170, aw = (CONTENT - 30) / 2;
-    this.btn.undo = button(this, MARGIN, ay, aw, 124, 'Urungkan', () => this.doUndo());
-    this.btn.reset = button(this, MARGIN + aw + 30, ay, aw, 124, 'Ulang', () => this.doReset());
+    this.btn.undo = button(this, MARGIN, ay, aw, 124, t('Urungkan'), () => this.doUndo());
+    this.btn.reset = button(this, MARGIN + aw + 30, ay, aw, 124, t('Ulang'), () => this.doReset());
     this.btn.undo.setEnabled(false);
-    this.note = label(this, MARGIN, ay + 150, 'Geser jari untuk mengisi banyak kotak sekaligus.', { size: 36, color: C.soft, wrap: CONTENT });
+    this.note = label(this, MARGIN, ay + 150, t('Geser jari untuk mengisi banyak kotak sekaligus.'), { size: 36, color: C.soft, wrap: CONTENT });
     this.setTool(FILL);
 
     this.input.on('pointerdown', q => this.onDown(q));
@@ -411,7 +477,7 @@ class PlayScene extends Phaser.Scene {
     save.grids[this.puzzle.id] = { g: this.board.grid, t: this.elapsed };
     store.write(save);
   }
-  toHome() { this.scene.start('Home'); }
+  toHome() { this.scene.start('Home', { cat: this.puzzle.cat }); }
 
   win() {
     this.done = true;
@@ -421,10 +487,10 @@ class PlayScene extends Phaser.Scene {
     delete save.grids[id];
     store.write(save);
     this.focus = null;
-    this.titleText.setText('Selesai!');
+    this.titleText.setText(t('Selesai!'));
     ['fill', 'cross', 'undo', 'reset'].forEach(k => this.btn[k].setVisible(false));
     this.toolFrame.setVisible(false); this.note.setVisible(false);
-    this.result = isBest ? `Waktu ${fmt(this.elapsed)} · rekor baru` : `Waktu ${fmt(this.elapsed)} · rekor ${fmt(best)}`;
+    this.result = isBest ? `${t('Waktu')} ${fmt(this.elapsed)} · ${t('rekor baru')}` : `${t('Waktu')} ${fmt(this.elapsed)} · ${t('rekor')} ${fmt(best)}`;
 
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) {
@@ -472,14 +538,14 @@ class PlayScene extends Phaser.Scene {
   }
 
   showResult() {
-    const p = this.puzzle, y = BOARD_Y + CONTENT + 36, idx = PUZZLES.indexOf(p);
+    const p = this.puzzle, y = BOARD_Y + CONTENT + 36, list = catOf(p.cat).puzzles, idx = list.indexOf(p);
     label(this, MARGIN, y, p.name, { display: true, size: 74, color: C.yellow, shadow: 5 });
     label(this, MARGIN, y + 100, p.caption, { size: 46, weight: '700', wrap: CONTENT, lineSpacing: 6 });
     label(this, MARGIN, y + 250, this.result, { size: 38, color: C.soft });
     const by = y + 320, w = (CONTENT - 30) / 2;
-    this.btn.again = button(this, MARGIN, by, w, 124, 'Main lagi', () => this.scene.restart({ puzzle: p, fresh: true }));
-    this.btn.next = button(this, MARGIN + w + 30, by, w, 124, idx < PUZZLES.length - 1 ? 'Lanjut' : 'Lihat koleksi', () => {
-      const n = PUZZLES[idx + 1];
+    this.btn.again = button(this, MARGIN, by, w, 124, t('Main lagi'), () => this.scene.restart({ puzzle: p, fresh: true }));
+    this.btn.next = button(this, MARGIN + w + 30, by, w, 124, idx < list.length - 1 ? t('Lanjut') : t('Lihat koleksi'), () => {
+      const n = list[idx + 1];
       if (n) this.scene.start('Play', { puzzle: n, fresh: save.best[n.id] !== undefined });
       else this.toHome();
     }, { fill: C.yellow, color: C.ink });
@@ -495,7 +561,7 @@ function boot() {
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 2 },
     banner: false,
-    scene: [TitleScene, HomeScene, PlayScene],
+    scene: [TitleScene, OptionsScene, CategoriesScene, HomeScene, PlayScene],
   });
 }
 boot();
