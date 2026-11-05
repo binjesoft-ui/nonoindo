@@ -42,5 +42,13 @@
       caption:'Sepiring nasi tanpa kerupuk rasanya kayak chat cuma dibaca.',
       pal:{ C:'#FBF0CF', P:'#D9A860' },
       art:["...C.CC...","..CPPPPCC.",".CPCCCCPC.","CCPCPPCPCC",".CPCPCCPC.","CCPCPPPPCC",".CPCCCCCC.","CCCPPPPPC.",".CCCCCCCC.","..CC.C...."] },
+    { id:'rambutan', name:'Rambutan', bg:'#BFE3B4',
+      caption:'Rambutnya gondrong, tapi isinya manis banget.',
+      pal:{ R:'#D42A2A', D:'#8E1616', G:'#4E9A34', W:'#FBF6E9', I:'#DCD3BC' },
+      art:["...G.G....",".G.RRR.G..","..RRDRRRWW",".GRRRRDWWI","GRRDRRRWWW",".RRRRDRWIW","GRDRRRRDWW",".GRRDRR.W.","..RRRRG...",".G.G.G...."] },
+    { id:'salak', name:'Salak', bg:'#F4D9B0',
+      caption:'Kulitnya kayak ular, sepet dikit tapi nagih.',
+      pal:{ B:'#7A3E1E', K:'#4F2410', Y:'#A9582A' },
+      art:["....KK....","...BBBB...","..BYBBYB..","..KBYBYK..",".BBKBKBB..",".BYBKBYB..",".BKBYBKB..","..BKBKB...","...BYB....","....B....."] },
   ],
 });

@@ -17,5 +17,13 @@
       caption:'Rumah bulat dari Papua, dingin gunung auto kalah.',
       pal:{ T:'#C9A25A', Y:'#8F6A2E', B:'#6B3F1D', D:'#2A1A10', G:'#4E8F3A' },
       art:["......TTT......","....TTYTYTT....","...TYTTTTTYT...","..TTTYTYTYTTT..","..YTYTTTTTYTY..",".TTTTYTYTYTTTT.",".YTYTTTTTTTYTY.","TTTTYTYTYTYTTTT","YYYYYYYYYYYYYYY","..B.B.B.B.B.B..","..B.B.DDD.B.B..","..B.B.DDD.B.B..","..B.B.DDD.B.B..","..BBBBDDDBBBB..",".GGGGGGGGGGGGG."] },
+    { id:'gunung-bromo', name:'Gunung Bromo', bg:'#9AD4EE',
+      caption:'Bangun jam dua pagi demi sunrise, dinginnya nggak ngotak.',
+      pal:{ W:'#FFFFFF', G:'#C9CDD2', S:'#8C8378', D:'#5D5247', K:'#3F362E', T:'#D9C7A0' },
+      art:["......WW.......",".....WWWW..WW..","...WWGWW..WWW..","....GWWWW..W...",".....GGW.......",".....GG........",".....S.S.......","....SSDSSS.....","...SSSDDSSSS...","..SSDSSSDDSSS..",".SSDDSSDSSSSSS.","SSDSSTKTTDSSDSS","TTTTTKDKTTTTTTT","TTTTKDKDKTTTTTT","TTTKDKDKDKTTTTT"] },
+    { id:'lumbung-padi', name:'Lumbung Padi', bg:'#F4C97A',
+      caption:'Atapnya gagah, padinya aman, tikus gigit jari.',
+      pal:{ K:'#5B3A1E', O:'#A8682E', Y:'#E5B94A', D:'#2E1D10', W:'#F7EBD0' },
+      art:[".......D.......","......KKK......",".....KOKOK.....","....KOKOKOK....","...KOKOKOKOK...","..KOKOKOKOKOK..",".KOKOKOKOKOKOK.","KKOKOKOKOKOKOKK","..KOKOKOKOKOK..","...YYYYYYYYY...","...WYWYWYWYW...","..DDDDDDDDDDD..","...D.......D...","...D.YY.YY.D...","..DDD.....DDD.."] },
   ],
 });
