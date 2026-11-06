@@ -16,7 +16,7 @@ exec(code, solver)
 
 DUMP = """
 global.window = {};
-for (const f of ['food', 'general', 'transport', 'landmark', 'animal']) require(process.cwd() + '/data/' + f + '.js');
+for (const f of require('fs').readdirSync('data')) if (f.endsWith('.js')) require(process.cwd() + '/data/' + f);
 console.log(JSON.stringify(window.PACKS));
 """
 packs = json.loads(subprocess.check_output(['node', '-e', DUMP]))
