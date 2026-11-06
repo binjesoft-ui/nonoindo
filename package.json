@@ -1,0 +1,16 @@
+{
+  "name": "nonoindo",
+  "version": "0.9.0",
+  "private": true,
+  "description": "NonoIndo Android app build files",
+  "scripts": {
+    "build:app": "node tools/build_app.js"
+  },
+  "devDependencies": {
+    "@fontsource/bungee": "^5.0.0",
+    "@fontsource/figtree": "^5.0.0",
+    "phaser": "3.80.1"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "binjesoft"
+}
