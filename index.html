@@ -57,40 +57,167 @@ for (const p of PUZZLES) {
   p.cols = bin[0].map((_, c) => runs(bin.map(r => r[c])));
 }
 
-// Original NonoIndo title music: a gentle gamelan-style loop in a pelog-like scale.
-const GAMELAN = (() => {
-  const HZ = { C4:261.63, E4:329.63, F4:349.23, G4:392, B4:493.88, C5:523.25, E5:659.26 };
-  const MELODY = (
-    'G4 B4 C5 B4  G4 F4 E4 F4  G4 B4 G4 F4  E4 C4 E4 F4  G4 G4 B4 C5  B4 G4 F4 G4  E4 F4 G4 B4  G4 F4 E4 -  ' +
-    'C5 C5 B4 G4  B4 C5 E5 C5  B4 G4 F4 E4  F4 G4 B4 G4  G4 B4 C5 B4  G4 F4 E4 F4  C4 E4 F4 G4  F4 E4 C4 E4'
-  ).trim().split(/\s+/);
-  const BPM = 84, BEAT = 60 / BPM;
-  const tone = (ctx, out, hz, t, vol, dur) => {
-    const osc = ctx.createOscillator(), gain = ctx.createGain();
-    osc.frequency.value = hz;
-    gain.gain.setValueAtTime(0.0001, t);
-    gain.gain.exponentialRampToValueAtTime(vol, t + 0.006);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    osc.connect(gain).connect(out);
-    osc.start(t);
-    osc.stop(t + dur + 0.02);
+// Original NonoIndo music, written as data and played by small synth voices.
+const MUSIC = (() => {
+  const NOTE = { C:0, 'C#':1, Db:1, D:2, 'D#':3, Eb:3, E:4, F:5, 'F#':6, Gb:6, G:7, 'G#':8, Ab:8, A:9, 'A#':10, Bb:10, B:11 };
+  const SHAPES = { '':[0,4,7], m:[0,3,7], '7':[0,4,7,10], m7:[0,3,7,10], maj7:[0,4,7,11] };
+  const midi = n => { const m = n.match(/^([A-G][#b]?)(\d)$/); return 12 * (+m[2] + 1) + NOTE[m[1]]; };
+  const hz = m => 440 * 2 ** ((m - 69) / 12);
+  const chord = (name, oct) => {
+    const m = name.match(/^([A-G][#b]?)(.*)$/), root = 12 * (oct + 1) + NOTE[m[1]];
+    return SHAPES[m[2]].map(i => root + i);
   };
-  const strike = (ctx, out, hz, t, vol, dur) => {
-    tone(ctx, out, hz, t, vol, dur);
-    tone(ctx, out, hz * 2.76, t, vol * 0.22, dur * 0.3); // Metal bars ring with a non-harmonic overtone.
-  };
-  const play = (ctx, out, beat, t) => {
-    const i = beat % MELODY.length, note = HZ[MELODY[i]], next = HZ[MELODY[(i + 1) % MELODY.length]];
-    if (i % 32 === 0) {
-      tone(ctx, out, 65.4, t, 0.34, 4.5);
-      tone(ctx, out, 66.7, t, 0.24, 4.5); // Two close pitches give the gong its slow wobble.
+  const noiseFor = new WeakMap();
+  const noise = ctx => {
+    if (!noiseFor.has(ctx)) {
+      const buf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      noiseFor.set(ctx, buf);
     }
-    if (note) strike(ctx, out, note, t, 0.17, 1.2);
-    if (note) strike(ctx, out, note * 2, t, 0.045, 0.45);
-    if (next) strike(ctx, out, next * 2, t + BEAT / 2, 0.04, 0.4);
-    if (i % 4 === 3 && note) tone(ctx, out, note / 2, t, 0.15, 1.7);
+    return noiseFor.get(ctx);
   };
-  return { play, BEAT, LENGTH: MELODY.length };
+  const env = (ctx, out, t, vol, dur, attack = 0.006) => {
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    g.connect(out);
+    return g;
+  };
+  const tone = (ctx, out, type, f, t, vol, dur, attack, cutoff) => {
+    const osc = ctx.createOscillator(), g = env(ctx, out, t, vol, dur, attack);
+    osc.type = type; osc.frequency.value = f;
+    if (cutoff) {
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass'; lp.frequency.value = cutoff;
+      osc.connect(lp).connect(g);
+    } else osc.connect(g);
+    osc.start(t); osc.stop(t + dur + 0.02);
+    return osc;
+  };
+  const voices = {
+    bell: (c, o, m, t, v, d) => { tone(c, o, 'sine', hz(m), t, v, d + 0.3); tone(c, o, 'sine', hz(m) * 3, t, v * 0.18, 0.25); },
+    flute: (c, o, m, t, v, d) => {
+      const osc = tone(c, o, 'sine', hz(m), t, v, d + 0.12, 0.05);
+      const lfo = c.createOscillator(), depth = c.createGain();
+      lfo.frequency.value = 5; depth.gain.value = 3;
+      lfo.connect(depth).connect(osc.frequency);
+      lfo.start(t); lfo.stop(t + d + 0.14);
+      tone(c, o, 'sine', hz(m) * 2, t, v * 0.12, d, 0.05);
+    },
+    piano: (c, o, m, t, v, d) => {
+      tone(c, o, 'sine', hz(m), t, v, d, 0.005);
+      tone(c, o, 'sine', hz(m) * 2, t, v * 0.4, d * 0.6, 0.005);
+      tone(c, o, 'sine', hz(m) * 3, t, v * 0.14, d * 0.3, 0.005);
+    },
+    keys: (c, o, m, t, v, d) => {
+      tone(c, o, 'sine', hz(m), t, v, d, 0.012);
+      tone(c, o, 'triangle', hz(m) * 2, t, v * 0.16, d * 0.5, 0.012);
+    },
+    lead: (c, o, m, t, v, d) => {
+      tone(c, o, 'triangle', hz(m), t, v, d + 0.15, 0.015);
+      tone(c, o, 'sine', hz(m) * 2, t, v * 0.2, d, 0.015);
+    },
+    pluck: (c, o, m, t, v, d) => tone(c, o, 'triangle', hz(m), t, v, d, 0.004, 2200),
+    bass: (c, o, m, t, v, d) => tone(c, o, 'triangle', hz(m), t, v, d, 0.01, 420),
+    pad: (c, o, m, t, v, d) => {
+      tone(c, o, 'sawtooth', hz(m) * 0.998, t, v, d, 0.3, 800);
+      tone(c, o, 'sawtooth', hz(m) * 1.002, t, v, d, 0.3, 800);
+    },
+  };
+  const hit = (c, o, t, v, d, type, f) => {
+    const src = c.createBufferSource(), flt = c.createBiquadFilter();
+    src.buffer = noise(c); flt.type = type; flt.frequency.value = f;
+    src.connect(flt).connect(env(c, o, t, v, d, 0.002));
+    src.start(t, Math.random() * 0.5); src.stop(t + d + 0.02);
+  };
+  const kick = (c, o, t, v) => {
+    const osc = c.createOscillator(), g = env(c, o, t, v, 0.26, 0.003);
+    osc.frequency.setValueAtTime(130, t);
+    osc.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+    osc.connect(g); osc.start(t); osc.stop(t + 0.3);
+  };
+  const snare = (c, o, t, v) => hit(c, o, t, v, 0.16, 'bandpass', 1800);
+  const hat = (c, o, t, v) => hit(c, o, t, v, 0.04, 'highpass', 7000);
+
+  const TRACKS = [
+    { id:'anak', name:{ id:'Anak', en:'Kids' }, bpm:132, lead:'bell', vol:0.26, level:1,
+      chords:['C','F','G','C','C','F','G','C'],
+      melody:['E5 G5 A5 G5 E5 . C5 .','F5 A5 G5 F5 E5 . . .','D5 E5 F5 G5 A5 . G5 .','E5 D5 C5 D5 E5 . . .',
+              'C5 C5 E5 G5 C6 . A5 .','A5 G5 F5 A5 G5 . . .','F5 E5 D5 E5 F5 . D5 .','C5 . E5 . C5 . . .'],
+      back(c, o, ch, s, t, d, pass) {
+        const n = chord(ch, 3);
+        if (s === 0) voices.bass(c, o, n[0] - 12, t, 0.3, d * 1.8);
+        if (s === 4) voices.bass(c, o, n[2] - 12, t, 0.26, d * 1.8);
+        if (s === 2 || s === 6) n.forEach(m => voices.pluck(c, o, m + 12, t, 0.08, d * 1.4));
+        if (s % 2 === 0) hat(c, o, t, 0.035);
+        if (pass === 1 && (s === 6 || s === 7)) voices.bell(c, o, midi('E6'), t, 0.07, 0.2); // Spoon tapping a bakso bowl.
+      } },
+    { id:'nusantara', name:{ id:'Nusantara', en:'Nusantara' }, bpm:104, lead:'flute', vol:0.2, level:1,
+      chords:['G','Em','C','D','G','C','D','G'],
+      melody:['B4 D5 E5 D5 B4 . G4 .','G4 A4 B4 D5 E5 . . .','E5 G5 E5 D5 C5 . E5 .','D5 C5 B4 A4 D5 . . .',
+              'B4 D5 G5 . F#5 E5 D5 .','E5 . C5 E5 D5 C5 B4 .','A4 B4 C5 A4 D5 . F#5 .','G5 . D5 . G4 . . .'],
+      back(c, o, ch, s, t, d) {
+        const n = chord(ch, 3);
+        if (s === 0) { voices.bass(c, o, n[0] - 12, t, 0.3, d * 2.5); kick(c, o, t, 0.2); }
+        if (s === 3) kick(c, o, t, 0.14);
+        if ([2, 3, 5, 6].includes(s)) n.forEach((m, i) => voices.pluck(c, o, m + 12, t + i * 0.012, 0.09, d * 1.6));
+        if (s === 4) voices.bass(c, o, n[2] - 12, t, 0.22, d * 1.8);
+      } },
+    { id:'piano', name:{ id:'Piano', en:'Piano' }, bpm:66, lead:'piano', vol:0.2, level:1,
+      chords:['Cmaj7','Am7','Fmaj7','G','Em7','Am7','Dm7','G'],
+      melody:['E5 . . . G5 . . .','E5 . . . C5 . . .','A4 . C5 . F5 . . .','D5 . . . . . B4 .',
+              'G5 . . . B4 . . .','C5 . E5 . A5 . . .','F5 . E5 . D5 . . .','G4 . B4 . D5 . . .'],
+      back(c, o, ch, s, t) {
+        const n = chord(ch, 3), order = [0, 2, 1, 2, n.length - 1, 2, 1, 2];
+        voices.piano(c, o, n[order[s]], t, s === 0 ? 0.13 : 0.09, 1.8);
+        if (s === 0) voices.piano(c, o, n[0] - 12, t, 0.12, 3);
+      } },
+    { id:'rnb', name:{ id:'R&B', en:'R&B' }, bpm:72, lead:'keys', vol:0.2, level:1,
+      chords:['Dm7','G7','Cmaj7','Am7','Fmaj7','Em7','Dm7','G7'],
+      melody:['. A4 C5 . D5 . . C5','B4 . . G4 A4 B4 . .','. E5 D5 . C5 . B4 .','C5 . A4 . . . . .',
+              '. A4 C5 . E5 . D5 C5','B4 . G4 . B4 D5 . .','. F5 E5 D5 C5 . A4 .','B4 . . . . . . .'],
+      back(c, o, ch, s, t, d) {
+        const n = chord(ch, 3);
+        if (s === 0) { n.forEach(m => voices.keys(c, o, m + 12, t, 0.07, d * 3.5)); n.slice(0, 3).forEach(m => voices.pad(c, o, m, t, 0.018, d * 8)); }
+        if (s === 3) n.slice(1).forEach(m => voices.keys(c, o, m + 12, t, 0.05, d * 1.5));
+        if (s === 0 || s === 3 || s === 6) { kick(c, o, t, s === 0 ? 0.42 : 0.28); voices.bass(c, o, n[0] - 12, t, 0.34, d * 1.6); }
+        if (s === 2 || s === 6) snare(c, o, t, 0.14);
+        hat(c, o, t, 0.035);
+        hat(c, o, t + d * 0.62, 0.018); // A late second hit gives the hats their swing.
+      } },
+    { id:'pop', name:{ id:'Pop', en:'Pop' }, bpm:100, lead:'lead', vol:0.2, level:1,
+      chords:['Am','F','C','G','Am','F','C','G','C','G','Am','F','C','G','F','C'],
+      melody:['E5 . E5 D5 C5 . A4 .','A4 C5 . C5 D5 . C5 .','G4 . G4 A4 C5 . E5 .','D5 . . C5 D5 . . .',
+              'E5 . E5 G5 A5 . G5 E5','F5 . E5 D5 C5 . A4 .','G4 C5 . D5 E5 . D5 C5','D5 . . . . . . .',
+              'G5 . G5 A5 G5 . E5 .','D5 . D5 E5 D5 . B4 .','C5 . C5 D5 E5 . G5 .','A5 . G5 . F5 . E5 .',
+              'G5 . G5 A5 G5 . E5 .','D5 . D5 E5 G5 . D5 .','C5 . D5 E5 F5 . E5 D5','C5 . . . . . . .'],
+      back(c, o, ch, s, t, d, pass, bar) {
+        const n = chord(ch, 3), chorus = bar >= 8;
+        n.forEach(m => voices.piano(c, o, m + (s % 2 ? 12 : 0), t, s % 2 ? 0.035 : 0.05, d * 1.8));
+        if (s === 0) n.forEach(m => voices.pad(c, o, m, t, chorus ? 0.022 : 0.012, d * 8));
+        if (s === 0 || s === 3 || s === 4) voices.bass(c, o, n[0] - 12, t, 0.3, d * 1.6);
+        if (s === 0 || s === 4 || (chorus && s === 3)) kick(c, o, t, 0.34);
+        if (s === 2 || s === 6) snare(c, o, t, chorus ? 0.14 : 0.1);
+        hat(c, o, t, s % 2 ? 0.02 : 0.035);
+      } },
+  ];
+  for (const tr of TRACKS) {
+    tr.bars = tr.melody.map(b => b.split(' '));
+    tr.stepDur = 30 / tr.bpm;
+    tr.steps = tr.bars.length * 8 * 2;
+  }
+  const play = (ctx, out, tr, step, t) => {
+    const i = step % tr.steps, count = tr.bars.length, bar = Math.floor(i / 8) % count, s = i % 8;
+    const pass = Math.floor(i / (count * 8)), note = tr.bars[bar][s];
+    if (note !== '.') {
+      let hold = 1;
+      while (s + hold < 8 && tr.bars[bar][s + hold] === '.') hold++;
+      voices[tr.lead](ctx, out, midi(note), t, tr.vol, tr.stepDur * hold);
+    }
+    tr.back(ctx, out, tr.chords[bar], s, t, tr.stepDur, pass, bar);
+  };
+  return { TRACKS, play };
 })();
 
 class Board {
@@ -153,7 +280,7 @@ class Board {
 </script>
 
 <script>
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 const TITLE_LAYERS = {"sky": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAEuElEQVR42u3dvWtVZxwH8N95uBiTTFZFS0ERKkI0KPiySodIa6Bx6iAuQofOZqmVDkVCXbpnKDjYKYM4aCkK/gGthRZfoCjUFkTBviyNaatwO9gXuc2tBHN7n+c5n8/yRQh6znO+9/eccxJMs+nguW7AMpIlGLz508eKPJbG5MDkyOQT++DyVDHHbHJgcqAcKEf7njKKK0fti/fO+5+0upjV3JDOnz421ItZI08ruOcoRU7vQZQjsz1/86ErthUK2FbWj62LiAgpezP9+OjnWD+2LmR++eDy1FD//ZTDQsydnFaIZXLzoStDXadm08FzXRdCZjs52pY3L+wr4jhX5Z5j/vQxC76C3HnkWhHH2Uy8cdGj7IDdvLAvdh655g1pDuZOTr/wxVxNJRYjIkwOvD43HZUjvwUelFMfXrKtYFshw4lqcmByoBwoh6eY8BIMk4N8y7FtzVhI2Ztp25qx+Pb3RyFlbyYLIfulySFNjhxz7uR01sfXTM9c7bpQcrlspmeues+B9xyD8vbsa3W+ITU5MDkovxy1jujSXFyYsK1gW0E5WM1t27aCyYFyoBwoB8Mtx+5YiogIKXszfR2jsTuWQsreTBZC9kuTQ5oc0uSQq5jNezOXBvr6fP/s4fjio0///vPcwt449daXnhMz0u+aDLwceAlGwfbPHm5XOeYW9q7q19Xs2W3ftoJtBeVAOVAOlAPlQDlQDpQDIiLSgbgfERFS9mb6PF6OA3E/pOzNZCFkvzQ5pMkhV57NhZmPfcsej7IoB8qBcqAcKAfKgXKgHCgHKAfKgXIw0HLsGb8VUvZm2jN+K75anAgpezNZCNkvTQ5pcsiVZ3P36Ak/JohHWZQD5UA5UA6UA+VAOSqz9cxai/CMjou/sq/57t1flcM0eP7fV3tROkrx4v9GrSXpKIRpUv0NaS43kzXd1KYNO+5ERESpufXM2uwuyLPHVPL6ph++eTU27LgTJWbun9KtZ9ZGyeubFENB+mVz9+iJbkkHPH58V7F7+OLZGyaHYixv/PiusibHLx+82S1lYWuxePaGR1m85zA1Kj2fZCGdV5HlqLUYpZyfew7KK0ftU6OE80wWzPnaVlAOKi5H27aUnM/b5KCMcrR1auR6/iYH/12OkcmlyCGJyOl6NI/PT3V/uz4aI5NLMcwcf/0nrfjT4mcvDf16jEwuRcqhGCbHvydHDtcl5XIg/COXD6zJYXL0zebx+aksfkyw84qC/OXJvVGPsngJhnKgHO43lKONN2DYVlAOlAPlQDkI/2GcJxaTA5PDy7AqJ2jqbN/49MJkkq3/tGZ0PdKT2w+js31j5JBE5HQ9Ui4H0tm+sfU3pU/ujUZO1yOrydH2rSWrD2p2k+P2w4ixLU8nSBszsw9q071+1C8dpqDfmvDo+/ZdibEtXoKVulBtPN9kwZyn1+dUVo7ap0fm59exgNhWqPgXANb0eFvINEwW1HnUsa2UXpDCjr9T7AKXtM0UWurkU+g46/yN1B5zTQ5MjjoedyuaZp1qX0f/n0WpdHvrRFT+fYtBlqTye55ORIu+Jb4aRXETDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQ/cHfG+EQsNWnCoAAAAASUVORK5CYII=", "city": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAFeklEQVR42u3dPYgcZRwH4HePQYSAhcUp7GmRs4nERbAQi2BIcYiFwUKIcifEwsImVhYWgpZWBkSwMUKCH1VMoeSuOBWLK+zOoIW5K6IL5gghiN4dNmshe5mMM7Ozezu7szPPA4HsZfbj3ve3//djZjchAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA0Ei9G2/3tMJdc5oA4VA9GNVf777QEwyVI9WRs8dVDuFAOBAOytPSBCEsLiz/b56x9fullsoBwpEtWSVUDeFAOBAOhAPhQDgQDoQD4UA4EA4QDoQD4UA4EA6Eg/qFoz2/1GvPL/Wacg1p2jWlwgHCQRFR2hCSN7wkf9bdWXMxblPCkdbZ/VD0/y15m4aEo4hkSARFOEJelVFNhEM1aXo4sialyZ+ndX5aNRGUGoUj2ZFZE1LDjmFl4BBSpMOzgiUsNQvHG89+ck8HXwnh4PbpY2cKP85H37/WMvTUfEIaD8SVX74YKiTmKA1YrSSD0g/JOIIiLDUJxziqSd6kOPnvySEuOWzp4uHE2zmaxBMeppoMCssowaPYubJoki8mWU0Os7xNVo548Joor4Jmtc+gdo+m9cucPnbmoOyPYyKaVjniq6imzF+y3iTx9ik63EZV+IXKWrFk3T9ZTvf/2Tn4+/33zYcQ/rsarKrfDZY2HJQxvEaDylH8iYscW1ZQxvmOjz9O8pLAeFCK7ASP4zUNewlm2nOW0TdRqLC8FUtZQ0O/coRQ7FsFx3FtbVWHuUqHo0hVmfZqpc7zl2hWX7jVSvlzmWjWl2jDrlbstBa/HjiqcwPkXQ8bn4DG5xllBngaO7dpFbU9v9Qr8iaZmXD80N0c6vgT7U6hwCwuLPfiK5S861iqXAWK7G9MZJ9j2I7K66wqyKoc/dXKoBXJMB1Txsqnu7PWatxStsrDU5FhJSs0WSHo7qy1nnjszaE6+afrH7RmarWyeXkndF6cb3yosipH1c8W98NeSjgEox4rwJkbVrKqkmo12gm5vCoXTaszx12VmhKMrPbMWyTc/vPnQuFJBqT0cHg3T689Nz9fD52XT4UHH3g8hBDCx6/fTj3u0tcnQ62/gmHz8o7kJNph49snMwNRidXKpOYCVa9Q8bKftVw90e4MvYfUn1z27zfOdih9tZL3YidxfQihmd/sEy+howwrg777q4zvBpvk8NfZuxM6e3fCxsp22FjZPrid/PP+qa/SK8coW+FV2RArWqFmdUI57WV6I1crw1SE/rHTvJ50Wm0Y2Uia3j5FGe0df8xnLh69u3JZ2R76ZGpkT2J6VSCvvUcNUdZxR84ez7/jxV1nZesWoqL+vnBtwBFHpz+slD0BNqyM7zFrP6yMazma9jijTFKnNazM1D6H7e5qLtPj/TKX1Ulld944fmEBK7df5g5zCvywO5TO+Ib6fqhpXKXP/kr54nseRS+ampvVLeUsu/u3wu7+rbC6tV76/5uyuLDcW1xY7q1urYfVrfWJnA+a5EVTc1U8IWaiWY12m3NCrD4n6JyyZ2Ja77z1ae/RRx4ufIcbv/0RHD+bx58/fzWEEMK5c8+l3k4er3JgWMFnZckRHz7SbqscGFYQDspcyi6/9J7PjpA+If11+7pWwLCCcCAcCAfCgXAgHAgHwoFwgHAgHAgHwoFwIBwIB8KBcCAcIBzka+3dvJr50YSTz3+We+fvvnml0JN4nNl8HJWD7Mrx9FOv+lAT5hwIB8KBcCAcCAfCgXAgHAgHCAfFtHo/dpxbQeVgONGX1z685wfd7s3Qbj808gO6f33ur3JgWEE4EA6EA+FAOBAOhAPhQDhAOBAOhAPhQDgQDoQD4UA4EA448C8xBdnqFl+XiAAAAABJRU5ErkJggg==", "bus": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAABv0lEQVR42u3bsUrDQBwH4Gtxc3MQQeqig5O4CT6Ak4OgIFKkDyAo1EG6KLp0E/QNioug4uDmAwhu0qmDLoogDm7OdVCKHWoSjbRpv29KSbjcXX78kx5JCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwz3JZ6uzL23vTJetsbGQ41euZF4z+kfYc5U0pwkFiQ1nsdPX2KfKYu8ZDa/u+ehSmKltt+2enJ1vb56XNsFI7jmwzreOS9C1Oe5W5gsqB2wrCgXAgHAgHwgHCgXAgHISBXz6Ps1y8+m2JOqqNSuMy3nlTOi5J35KcV+VAOBAOhAPhIHjBuAse52e8QxrDxE09p3IQrHMQS+F08at01D1zoHK0nBV3ftx/uF+L1U55r9TT4/z1OK78W0Hl+JuTi4O23+vLu8bRz+Eori2lUo6j2snKbaXTOLY3BjAcUR8Jj48uNLvxsXHaemkcmfrKPo1JfX69zhmHB1IAAAAAAAAAAAAAAAAAAAAAAAAAAODTB7USXGj/ha4+AAAAAElFTkSuQmCC", "stall": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAADoklEQVR42u3bQWgcVRwH4P+IpR5aGjBoQYxCg21TswdREGswVoi5SEVCoBWtVNCIB9umBk89FA9haTUexPYi5qAF6UFzkBqwtsStFvWSaFrFIkQEIxEW9KCEsB7KbnfN7HZXJJnI91123ps3kyXvl/fmzUwiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhpSXlj7oFcKa3B7Z9Oph7408N9kaX2yfrNie78b93gV4BwIBwIB8KBcJDtcHRcmF62FOy4MJ2kLRGT9ZuT1Wqf2zFqGbtaujsPlLo7D5R8P0wr1HVjvR233dLX0l/nz79OJitxDBkIR0TEpeN/VLY/6ToVj8zuWbYdEbF9eENl+/Dkkbrn6//+/Thz12BERBzrO1qpb99zIrX921O7Y3/Ph5XywqkhPZa1aWVsYilmRgcr5ZnRwRibWGrpB80f3Bvjb33QsM3JQxtbqmeVwzE2sRRbOtojIuLZ/I815WYDMn9wb1xZWKwZQZoNiGBkdFopuzK30LB8vWBERGxpXxe3vv7e1REkIiK2LWv7/Gu/x8lDG68FYupaPRkLx7qBM/HyQBNnGR5oOGJUB6NcrqcchPO7n444tikeEozsTiuzO3fWfNara2bEqC7Xky/2Rr7YGxfH5+Li+Fzki716KYvhWDzdH12FQkRE5bN6u6tQiMXT/Q2vMapHjHK5UTC2vXEptZ4MjhxpnX+9ffteeLzlEaPs8kvbK9tpQSFjS9m0ENQLxtDWXMMRY2hrrtKmnnIoqoNCRlcrERGffzVbU763Qds7H3s1hiIiPvomdf+J76ZT60fazkW+2LssFCNt5/RU1sJRfecz4p93PjekHtN5x0DLX6L6zuf+lCVuhDujsRaeepb++qXUTF2zvr6nu9RqvaeysbL/mlAdjoiImR/GkoiI42+++686YvjFJxu+Y1E8+2ApIqJt12dJK/U9z12d0Mrfj1UMR0TE2akvWgrIrp77G3bcx/s6as736Phc0kr94cITwuF9DoQD4WCNXnOUvsytyRVAct+0aw8jB8JBdpeym+5+pXTTzTtSG//527eRlX3z558ynRg5EA6EA+FAOBAOhAOEA+FAOBAOhAPhQDiI/9Ej+yMj76ypN8KO5p/x6N7IAQAAAAAAANn1N1jAQMjeVyuqAAAAAElFTkSuQmCC", "ojol": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAB+0lEQVR42u3av0tbURQA4POkIFSw1CENxHYSChnUVf8A54JdzejSP0BwqGi3Tl1Kd91KhS5dOnR0bwsF4U2ppepSpCh0ul0EI6nmJX1ifnzf9h6PO9x7OOfck0QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAwyWxB/0t/DtO1hzhevZFzHLP1CA66dscWDKbphw2ZA2UFZYVezL990fbu4Pt2623FVXYUze08u/Ia+3nldaasoKyMqpmNp0lwcKWJmQdt707zozA+lzlSN0FTRBn9iJ5jCL35+Tv2XjaS4EDPQfHSsRgRtcpSqlWWLmWPH8cfM5kDmYN2zcXZ82xxGI/2vmR6Dq6VmuspNdeTzDGA8s13WS/j8zDnGC2tTeTUZL3j91/zV9m/y0ooK2hI6diACo6h1zqLmJqsJ5lDn1F6ECzk1ahVqqlIEAqOAfSh8in8hxQNKZ3t7G5dPKytlrreyvJzwTEsFvJqTz+aldXDKCuECemA31bKzhxF1pM5kDn6Uf3xkxQRcfLrrOO39+7fLbxu0fW+7b/PNKR9rpuDv431AAAAAAAAgP/wF/L5ZYoUK5I3AAAAAElFTkSuQmCC", "title": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAACHElEQVR42u3dsVXDMBAA0AuPNWCEdDRZillYioaOEZJBTAEp8CMosi1bkv+vbefy3vkUSfYlAgAAAAAAAAAAAAAAUg4lLz58HIdfH/byeSh1/vjY5BfPuFYrcS/twf1BFclxPh2H8ynvTlny/KnXajVulYNiHtf8sKe3n3E2vjN/zvh5a1y/967KiaXVuFUO+qgcf42fERHP7/OzP/da1ztvyvmtxq1yIDmQHEgOJAdmK7dcXrebs+8xbpWDvtY5rnPyNefse45b5aCvFdLxvsJ4LK9Vq3GrHPRROVJjee1ajVvlQHIgOZAcSA7MVpZaP4gCaw25z272GLfKQR+VY8r6wdS1hhL7Ia3GrXJQV+WYOz7mnF/yN0QrcascAACEzj4x7Y3ypWYRpbvvzI07JxadfQgbb7FdZ6C9dN/R2YfY/QrpePdy/GZZbNQ1KGJeXP/ForMPKkdk7lamutSkjq9l13XJ7js6+2C2guRAciA5oKVnSHXfUTlQOUL3HZUDlaMRe+m+o3Kgcui+o3IgOZAcSA4kB6wzW8l9JyO1FjFnfySn+05uXDnPzursg8oRDf6b5BrrHvfEqbMPKscW42PJ7jtrjus6+wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFTvC/cFlnLMMj48AAAAAElFTkSuQmCC"};
 const titleImages = {};
 const titleReady = Promise.all(Object.entries(TITLE_LAYERS).map(([name, src]) => new Promise(res => {
@@ -189,6 +316,8 @@ save.grids = save.grids || {};
 save.lang = save.lang === 'en' ? 'en' : 'id';
 save.music = save.music !== false;
 save.sfx = save.sfx !== false;
+save.playMusic = save.playMusic === true;
+save.track = save.track === 'random' || MUSIC.TRACKS.some(tr => tr.id === save.track) ? save.track : 'random';
 
 const I18N = {
   en: {
@@ -199,7 +328,7 @@ const I18N = {
       'Each number is the length of a run of filled squares in that row or column, in order. Runs must be separated by at least one empty square. Use Cross to mark squares you are sure are empty.',
     'Isi':'Fill','Silang':'Cross','Urungkan':'Undo','Ulang':'Reset',
     'Geser jari untuk mengisi banyak kotak sekaligus. Ketuk angka untuk mengunci satu baris atau kolom.':'Drag your finger to fill many squares at once. Tap the numbers to lock one row or column.',
-    'Ulang puzzle ini?':'Reset this puzzle?','Semua kotak akan dikosongkan.':'All squares will be cleared.','Batal':'Cancel','Suara':'Sound','Musik':'Music','Nyala':'On','Mati':'Off','Sebelumnya':'Previous','Berikutnya':'Next',
+    'Ulang puzzle ini?':'Reset this puzzle?','Semua kotak akan dikosongkan.':'All squares will be cleared.','Batal':'Cancel','Suara':'Sound','Musik':'Music','Nyala':'On','Mati':'Off','Lagu':'Song','Acak':'Random','Musik saat main':'Music during puzzles','Sebelumnya':'Previous','Berikutnya':'Next',
     'Selesai!':'Done!','Waktu':'Time','rekor baru':'new best','rekor':'best',
     'Main lagi':'Play again','Lihat koleksi':'View collection',
     'Bahasa':'Language','Kategori':'Categories','Segera hadir':'Coming soon',
@@ -210,14 +339,23 @@ const catName = c => c.name[save.lang] || c.name.id;
 
 // Short sounds made in the browser, so the game needs no audio files.
 const sfx = (() => {
-  let ctx = null, last = 0, wanted = false, band = null, timer = null, beat = 0, nextAt = 0;
+  let ctx = null, last = 0, wanted = false, level = 0.75, band = null, timer = null, step = 0, nextAt = 0, track = null;
   const running = () => ctx && ctx.state === 'running';
+  const choose = () => {
+    if (save.track !== 'random') return MUSIC.TRACKS.find(tr => tr.id === save.track);
+    const others = MUSIC.TRACKS.filter(tr => tr !== track);
+    return others[Math.floor(Math.random() * others.length)];
+  };
   const tick = () => {
     const now = ctx.currentTime;
     if (nextAt < now) nextAt = now + 0.05;
     while (nextAt < now + 0.4) {
-      GAMELAN.play(ctx, band, beat++, nextAt);
-      nextAt += GAMELAN.BEAT;
+      MUSIC.play(ctx, band, track, step++, nextAt);
+      nextAt += track.stepDur;
+      if (step >= track.steps) {
+        step = 0;
+        if (save.track === 'random') { track = choose(); nextAt += 0.8; } // A short breath between songs.
+      }
     }
   };
   const stopBand = () => {
@@ -236,12 +374,16 @@ const sfx = (() => {
     if (on && !band) {
       band = ctx.createGain();
       band.gain.setValueAtTime(0, ctx.currentTime);
-      band.gain.linearRampToValueAtTime(0.75, ctx.currentTime + 1);
+      band.gain.linearRampToValueAtTime(level, ctx.currentTime + 1);
       band.connect(ctx.destination);
-      beat = 0; nextAt = ctx.currentTime + 0.1;
+      track = choose(); step = 0; nextAt = ctx.currentTime + 0.1;
       tick();
       timer = setInterval(tick, 100);
-    } else if (!on) stopBand();
+    } else if (on) {
+      band.gain.cancelScheduledValues(ctx.currentTime);
+      band.gain.setValueAtTime(band.gain.value, ctx.currentTime);
+      band.gain.linearRampToValueAtTime(level, ctx.currentTime + 0.5);
+    } else stopBand();
   };
   const unlock = () => {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -275,7 +417,8 @@ const sfx = (() => {
     [FILL]: () => blip('triangle', 300, 130, 0.1, 0.4),
     [CROSSED]: () => blip('square', 1500, 900, 0.05, 0.1),
     [EMPTY]: () => blip('sine', 520, 340, 0.05, 0.12),
-    music(on) { wanted = on; sync(); },
+    music(on, volume = 0.75) { wanted = on; level = volume; sync(); },
+    changeTrack() { if (running()) stopBand(); sync(); },
     sync,
   };
 })();
@@ -447,7 +590,21 @@ class OptionsScene extends Phaser.Scene {
       }, { size: 44, fill: on ? C.yellow : C.deep, color: on ? C.ink : C.soft });
       if (on) this.btn[key].rect.setStrokeStyle(8, hex(C.paper));
     });
-    const py = 870, ph = 440;
+    label(this, MARGIN, 845, t('Lagu'), { display: true, size: 40 });
+    const sw = (CONTENT - 40) / 3, choices = [...MUSIC.TRACKS.map(tr => [tr.id, tr.name[save.lang]]), ['random', t('Acak')]];
+    choices.forEach(([id, name], i) => {
+      const on = save.track === id, x = MARGIN + (i % 3) * (sw + 20), y = 915 + Math.floor(i / 3) * 124;
+      this.btn[`song-${id}`] = button(this, x, y, sw, 108, name, () => {
+        save.track = id; store.write(save); sfx.changeTrack(); this.scene.restart();
+      }, { size: 38, fill: on ? C.yellow : C.deep, color: on ? C.ink : C.soft });
+      if (on) this.btn[`song-${id}`].rect.setStrokeStyle(6, hex(C.paper));
+    });
+    const during = save.playMusic;
+    this.btn.during = button(this, MARGIN, 1175, CONTENT, 116, `${t('Musik saat main')}: ${t(during ? 'Nyala' : 'Mati')}`, () => {
+      save.playMusic = !save.playMusic; store.write(save); this.scene.restart();
+    }, { size: 40, fill: during ? C.yellow : C.deep, color: during ? C.ink : C.soft });
+    if (during) this.btn.during.rect.setStrokeStyle(6, hex(C.paper));
+    const py = 1330, ph = 440;
     this.add.rectangle(VW / 2, py + ph / 2, CONTENT, ph, hex(C.deep));
     label(this, MARGIN + 40, py + 34, t('Cara main'), { display: true, size: 42, color: C.yellow });
     label(this, MARGIN + 40, py + 100,
@@ -532,7 +689,7 @@ class PlayScene extends Phaser.Scene {
     this.tool = FILL; this.done = false; this.focus = null; this.keyCursor = false; this.lock = null; this.dialog = null;
   }
   create() {
-    sfx.music(false);
+    sfx.music(save.playMusic, 0.4);
     const p = this.puzzle;
     this.btn = {};
     this.btn.back = button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.toHome(), { size: 38 });
