@@ -57,6 +57,57 @@ for (const p of PUZZLES) {
   p.cols = bin[0].map((_, c) => runs(bin.map(r => r[c])));
 }
 
+// Guide pages for Opsi. A demo draws a small 5x5 board; marks use # filled, x crossed, * newly filled.
+const HEART = ['.#.#.', '#####', '#####', '.###.', '..#..'];
+const GUIDE = {
+  how: {
+    title: { id:'Cara Main', en:'How to Play' },
+    pages: [
+      { title:{ id:'Temukan gambarnya', en:'Find the picture' },
+        text:{ id:'Setiap puzzle menyembunyikan satu gambar. Pakai angka di tepi papan untuk menemukan kotak mana yang terisi.', en:'Every puzzle hides a picture. Use the numbers around the board to work out which squares are filled.' },
+        demo:{ marks:HEART } },
+      { title:{ id:'Baca angkanya', en:'Read the numbers' },
+        text:{ id:'Angka 1 1 berarti ada dua kelompok berisi satu kotak, dipisah minimal satu kotak kosong. Urutan angka sama dengan urutan kelompok.', en:'1 1 means two groups of one square, with at least one empty square between them. The numbers follow the order of the groups.' },
+        demo:{ marks:['.*.*.', '.....', '.....', '.....', '.....'], row:0 } },
+      { title:{ id:'Isi dan Silang', en:'Fill and Cross' },
+        text:{ id:'Pilih Isi untuk kotak terisi. Pilih Silang untuk kotak yang kamu yakin kosong. Tombol kuning dengan centang adalah alat yang sedang dipakai.', en:'Choose Fill for filled squares. Choose Cross for squares you are sure are empty. The yellow button with a check is the tool in use.' },
+        demo:{ marks:['x#x#x', '.....', '.....', '.....', '.....'], row:0, arrow:[[0, 0], [0, 2]] }, tools:true },
+      { title:{ id:'Geser dan kunci', en:'Drag and lock' },
+        text:{ id:'Geser jari untuk mengisi satu garis. Ketuk angka di atas atau kiri untuk mengunci garis itu. Ketuk lagi untuk membuka kunci.', en:'Drag your finger to fill a line. Tap the numbers on the top or left to lock that line. Tap again to unlock it.' },
+        demo:{ marks:['.....', '#####', '.....', '.....', '.....'], row:1, arrow:[[1, 0], [1, 4]] } },
+      { title:{ id:'Baris pink', en:'Pink lines' },
+        text:{ id:'Garis berubah pink kalau isinya pasti tidak cocok dengan angkanya, walau belum selesai. Di sini angka 3 tidak mungkin punya 2 kelompok.', en:'A line turns pink when it can no longer match its numbers, even before it is finished. Here, 3 cannot have two groups.' },
+        demo:{ marks:['.....', '.....', '.....', '#.#..', '.....'], pink:3 } },
+      { title:{ id:'Petunjuk dan medali', en:'Hints and medals' },
+        text:{ id:'Petunjuk mengisi satu kotak acak dari tepi. Periksa menandai kotak yang salah. Masing-masing bisa dipakai sekali per puzzle. Selesai tanpa bantuan dapat emas, satu bantuan perak, dua bantuan perunggu.', en:'Hint fills one random square from the edge. Check marks wrong squares. You can use each once per puzzle. No help earns gold, one earns silver, and two earn bronze.' },
+        medals:true },
+    ],
+  },
+  tips: {
+    title: { id:'Tips & Trik', en:'Tips & Tricks' },
+    pages: [
+      { title:{ id:'Mulai dari yang penuh', en:'Start with full lines' },
+        text:{ id:'Angka 5 di papan 5 kotak berarti semua kotak terisi. Cari angka terbesar dulu, karena hasilnya paling pasti.', en:'A 5 on a board 5 squares wide fills the whole line. Look for the biggest numbers first, because they give the surest answers.' },
+        demo:{ marks:['.....', '*****', '*****', '.....', '.....'], row:1, arrow:[[1, 0], [1, 4]] } },
+      { title:{ id:'Cari yang pasti bertumpuk', en:'Find the overlap' },
+        text:{ id:'Angka 4 di garis 5 kotak bisa mulai dari atas atau dari bawah. Dua posisi itu selalu bertumpuk di tiga kotak tengah, jadi tiga kotak itu pasti terisi.', en:'A 4 on a line of 5 can start at the top or one square lower. Both positions always cover the middle three squares, so those are certain.' },
+        demo:{ marks:['.....', '.*...', '.*...', '.*...', '.....'], col:1, arrow:[[0, 1], [4, 1]] } },
+      { title:{ id:'Silang yang sudah selesai', en:'Cross finished lines' },
+        text:{ id:'Kalau angka garis sudah terpenuhi, silang sisa kotaknya. Silang membantu baris dan kolom lain.', en:'When a line matches its numbers, cross the rest of it. Those crosses help the rows and columns they meet.' },
+        demo:{ marks:['x....', '#####', '#####', 'x....', 'x....'], col:0, arrow:[[3, 0], [4, 0]] } },
+      { title:{ id:'Pakai silang untuk menghitung', en:'Use crosses to count' },
+        text:{ id:'Kalau kedua ujung sudah disilang, tersisa tiga kotak untuk angka 3. Semua kotak itu pasti terisi.', en:'With both ends crossed, three squares are left for the 3. All of them must be filled.' },
+        demo:{ marks:['.....', '.....', '.....', 'x***x', '.....'], row:3, arrow:[[3, 1], [3, 3]] } },
+      { title:{ id:'Ruang terlalu kecil', en:'Spaces that are too small' },
+        text:{ id:'Angka 2 tidak muat di satu kotak di bawah silang ini, jadi kotak itu pasti kosong. Silang saja.', en:'A 2 cannot fit in the single square below this cross, so that square must be empty. Cross it.' },
+        demo:{ marks:['.....', '.....', '.....', 'x....', 'x....'], col:0, arrow:[[3, 0], [4, 0]] } },
+      { title:{ id:'Bolak-balik', en:'Switch back and forth' },
+        text:{ id:'Setiap kotak baru memberi petunjuk ke garis yang memotongnya. Pindah antara baris dan kolom sampai gambarnya terlihat. Puzzle di game ini tidak perlu menebak.', en:'Each new square gives a clue to the line crossing it. Keep moving between rows and columns until the picture appears. No puzzle here needs guessing.' },
+        demo:{ marks:['.x.x.', '#####', '#####', 'x###x', 'xx#xx'], arrow:[[2, 2], [4, 2]] } },
+    ],
+  },
+};
+
 // Original NonoIndo music, written as data and played by small synth voices.
 const MUSIC = (() => {
   const NOTE = { C:0, 'C#':1, Db:1, D:2, 'D#':3, Eb:3, E:4, F:5, 'F#':6, Gb:6, G:7, 'G#':8, Ab:8, A:9, 'A#':10, Bb:10, B:11 };
@@ -220,6 +271,24 @@ const MUSIC = (() => {
   return { TRACKS, play };
 })();
 
+// Every way a clue can sit on a line, stored as bit masks.
+const placementCache = new Map();
+function placements(clue) {
+  const key = `${N}:${clue.join(',')}`;
+  if (placementCache.has(key)) return placementCache.get(key);
+  const out = [];
+  const place = (i, from, mask) => {
+    if (i === clue.length) { out.push(mask); return; }
+    const need = clue.slice(i).reduce((a, b) => a + b, 0) + clue.length - i - 1;
+    for (let at = from; at + need <= N; at++) {
+      place(i + 1, at + clue[i] + 1, mask | (((1 << clue[i]) - 1) << at));
+    }
+  };
+  place(0, 0, 0);
+  placementCache.set(key, out);
+  return out;
+}
+
 class Board {
   constructor(puzzle, grid) {
     this.puzzle = puzzle;
@@ -230,6 +299,32 @@ class Board {
   lineDone(i, isRow) {
     const line = isRow ? this.grid[i] : this.grid.map(r => r[i]);
     return same(runs(line.map(v => v === FILL ? 1 : 0)), isRow ? this.puzzle.rows[i] : this.puzzle.cols[i]);
+  }
+  // True when the line's marks can no longer fit its clue in any position.
+  lineImpossible(i, isRow) {
+    const line = isRow ? this.grid[i] : this.grid.map(r => r[i]);
+    let fill = 0, cross = 0;
+    line.forEach((v, j) => {
+      if (v === FILL) fill |= 1 << j;
+      if (v === CROSSED) cross |= 1 << j;
+    });
+    return !placements(isRow ? this.puzzle.rows[i] : this.puzzle.cols[i]).some(p => (p & fill) === fill && (p & cross) === 0);
+  }
+  want(r, c) { return this.puzzle.art[r][c] === '.' ? CROSSED : FILL; }
+  // One random unfinished square, taken from the outer edge while any remain there.
+  pickHint() {
+    const open = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (this.grid[r][c] !== this.want(r, c)) open.push({ r, c });
+    const edge = open.filter(p => p.r === 0 || p.c === 0 || p.r === N - 1 || p.c === N - 1);
+    const from = edge.length ? edge : open;
+    return from.length ? from[Math.floor(Math.random() * from.length)] : null;
+  }
+  wrongCells() {
+    const out = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+      if (this.grid[r][c] !== EMPTY && this.grid[r][c] !== this.want(r, c)) out.push({ r, c });
+    }
+    return out;
   }
   isWon() {
     for (let i = 0; i < N; i++) if (!this.lineDone(i, true) || !this.lineDone(i, false)) return false;
@@ -280,7 +375,7 @@ class Board {
 </script>
 
 <script>
-const VERSION = '0.4.0';
+const VERSION = '0.6.0';
 const TITLE_LAYERS = {"sky": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAEuElEQVR42u3dvWtVZxwH8N95uBiTTFZFS0ERKkI0KPiySodIa6Bx6iAuQofOZqmVDkVCXbpnKDjYKYM4aCkK/gGthRZfoCjUFkTBviyNaatwO9gXuc2tBHN7n+c5n8/yRQh6znO+9/eccxJMs+nguW7AMpIlGLz508eKPJbG5MDkyOQT++DyVDHHbHJgcqAcKEf7njKKK0fti/fO+5+0upjV3JDOnz421ItZI08ruOcoRU7vQZQjsz1/86ErthUK2FbWj62LiAgpezP9+OjnWD+2LmR++eDy1FD//ZTDQsydnFaIZXLzoStDXadm08FzXRdCZjs52pY3L+wr4jhX5Z5j/vQxC76C3HnkWhHH2Uy8cdGj7IDdvLAvdh655g1pDuZOTr/wxVxNJRYjIkwOvD43HZUjvwUelFMfXrKtYFshw4lqcmByoBwoh6eY8BIMk4N8y7FtzVhI2Ztp25qx+Pb3RyFlbyYLIfulySFNjhxz7uR01sfXTM9c7bpQcrlspmeues+B9xyD8vbsa3W+ITU5MDkovxy1jujSXFyYsK1gW0E5WM1t27aCyYFyoBwoB8Mtx+5YiogIKXszfR2jsTuWQsreTBZC9kuTQ5oc0uSQq5jNezOXBvr6fP/s4fjio0///vPcwt449daXnhMz0u+aDLwceAlGwfbPHm5XOeYW9q7q19Xs2W3ftoJtBeVAOVAOlAPlQDlQDpQDIiLSgbgfERFS9mb6PF6OA3E/pOzNZCFkvzQ5pMkhV57NhZmPfcsej7IoB8qBcqAcKAfKgXKgHCgHKAfKgXIw0HLsGb8VUvZm2jN+K75anAgpezNZCNkvTQ5pcsiVZ3P36Ak/JohHWZQD5UA5UA6UA+VAOSqz9cxai/CMjou/sq/57t1flcM0eP7fV3tROkrx4v9GrSXpKIRpUv0NaS43kzXd1KYNO+5ERESpufXM2uwuyLPHVPL6ph++eTU27LgTJWbun9KtZ9ZGyeubFENB+mVz9+iJbkkHPH58V7F7+OLZGyaHYixv/PiusibHLx+82S1lYWuxePaGR1m85zA1Kj2fZCGdV5HlqLUYpZyfew7KK0ftU6OE80wWzPnaVlAOKi5H27aUnM/b5KCMcrR1auR6/iYH/12OkcmlyCGJyOl6NI/PT3V/uz4aI5NLMcwcf/0nrfjT4mcvDf16jEwuRcqhGCbHvydHDtcl5XIg/COXD6zJYXL0zebx+aksfkyw84qC/OXJvVGPsngJhnKgHO43lKONN2DYVlAOlAPlQDkI/2GcJxaTA5PDy7AqJ2jqbN/49MJkkq3/tGZ0PdKT2w+js31j5JBE5HQ9Ui4H0tm+sfU3pU/ujUZO1yOrydH2rSWrD2p2k+P2w4ixLU8nSBszsw9q071+1C8dpqDfmvDo+/ZdibEtXoKVulBtPN9kwZyn1+dUVo7ap0fm59exgNhWqPgXANb0eFvINEwW1HnUsa2UXpDCjr9T7AKXtM0UWurkU+g46/yN1B5zTQ5MjjoedyuaZp1qX0f/n0WpdHvrRFT+fYtBlqTye55ORIu+Jb4aRXETDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQ/cHfG+EQsNWnCoAAAAASUVORK5CYII=", "city": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAFeklEQVR42u3dPYgcZRwH4HePQYSAhcUp7GmRs4nERbAQi2BIcYiFwUKIcifEwsImVhYWgpZWBkSwMUKCH1VMoeSuOBWLK+zOoIW5K6IL5gghiN4dNmshe5mMM7Ozezu7szPPA4HsZfbj3ve3//djZjchAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA0Ei9G2/3tMJdc5oA4VA9GNVf777QEwyVI9WRs8dVDuFAOBAOytPSBCEsLiz/b56x9fullsoBwpEtWSVUDeFAOBAOhAPhQDgQDoQD4UA4EA4QDoQD4UA4EA6Eg/qFoz2/1GvPL/Wacg1p2jWlwgHCQRFR2hCSN7wkf9bdWXMxblPCkdbZ/VD0/y15m4aEo4hkSARFOEJelVFNhEM1aXo4sialyZ+ndX5aNRGUGoUj2ZFZE1LDjmFl4BBSpMOzgiUsNQvHG89+ck8HXwnh4PbpY2cKP85H37/WMvTUfEIaD8SVX74YKiTmKA1YrSSD0g/JOIIiLDUJxziqSd6kOPnvySEuOWzp4uHE2zmaxBMeppoMCssowaPYubJoki8mWU0Os7xNVo548Joor4Jmtc+gdo+m9cucPnbmoOyPYyKaVjniq6imzF+y3iTx9ik63EZV+IXKWrFk3T9ZTvf/2Tn4+/33zYcQ/rsarKrfDZY2HJQxvEaDylH8iYscW1ZQxvmOjz9O8pLAeFCK7ASP4zUNewlm2nOW0TdRqLC8FUtZQ0O/coRQ7FsFx3FtbVWHuUqHo0hVmfZqpc7zl2hWX7jVSvlzmWjWl2jDrlbstBa/HjiqcwPkXQ8bn4DG5xllBngaO7dpFbU9v9Qr8iaZmXD80N0c6vgT7U6hwCwuLPfiK5S861iqXAWK7G9MZJ9j2I7K66wqyKoc/dXKoBXJMB1Txsqnu7PWatxStsrDU5FhJSs0WSHo7qy1nnjszaE6+afrH7RmarWyeXkndF6cb3yosipH1c8W98NeSjgEox4rwJkbVrKqkmo12gm5vCoXTaszx12VmhKMrPbMWyTc/vPnQuFJBqT0cHg3T689Nz9fD52XT4UHH3g8hBDCx6/fTj3u0tcnQ62/gmHz8o7kJNph49snMwNRidXKpOYCVa9Q8bKftVw90e4MvYfUn1z27zfOdih9tZL3YidxfQihmd/sEy+howwrg777q4zvBpvk8NfZuxM6e3fCxsp22FjZPrid/PP+qa/SK8coW+FV2RArWqFmdUI57WV6I1crw1SE/rHTvJ50Wm0Y2Uia3j5FGe0df8xnLh69u3JZ2R76ZGpkT2J6VSCvvUcNUdZxR84ez7/jxV1nZesWoqL+vnBtwBFHpz+slD0BNqyM7zFrP6yMazma9jijTFKnNazM1D6H7e5qLtPj/TKX1Ulld944fmEBK7df5g5zCvywO5TO+Ib6fqhpXKXP/kr54nseRS+ampvVLeUsu/u3wu7+rbC6tV76/5uyuLDcW1xY7q1urYfVrfWJnA+a5EVTc1U8IWaiWY12m3NCrD4n6JyyZ2Ja77z1ae/RRx4ufIcbv/0RHD+bx58/fzWEEMK5c8+l3k4er3JgWMFnZckRHz7SbqscGFYQDspcyi6/9J7PjpA+If11+7pWwLCCcCAcCAfCgXAgHAgHwoFwgHAgHAgHwoFwIBwIB8KBcCAcIBzka+3dvJr50YSTz3+We+fvvnml0JN4nNl8HJWD7Mrx9FOv+lAT5hwIB8KBcCAcCAfCgXAgHAgHCAfFtHo/dpxbQeVgONGX1z685wfd7s3Qbj808gO6f33ur3JgWEE4EA6EA+FAOBAOhAPhQDhAOBAOhAPhQDgQDoQD4UA4EA448C8xBdnqFl+XiAAAAABJRU5ErkJggg==", "bus": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAABv0lEQVR42u3bsUrDQBwH4Gtxc3MQQeqig5O4CT6Ak4OgIFKkDyAo1EG6KLp0E/QNioug4uDmAwhu0qmDLoogDm7OdVCKHWoSjbRpv29KSbjcXX78kx5JCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwz3JZ6uzL23vTJetsbGQ41euZF4z+kfYc5U0pwkFiQ1nsdPX2KfKYu8ZDa/u+ehSmKltt+2enJ1vb56XNsFI7jmwzreOS9C1Oe5W5gsqB2wrCgXAgHAgHwgHCgXAgHISBXz6Ps1y8+m2JOqqNSuMy3nlTOi5J35KcV+VAOBAOhAPhIHjBuAse52e8QxrDxE09p3IQrHMQS+F08at01D1zoHK0nBV3ftx/uF+L1U55r9TT4/z1OK78W0Hl+JuTi4O23+vLu8bRz+Eori2lUo6j2snKbaXTOLY3BjAcUR8Jj48uNLvxsXHaemkcmfrKPo1JfX69zhmHB1IAAAAAAAAAAAAAAAAAAAAAAAAAAODTB7USXGj/ha4+AAAAAElFTkSuQmCC", "stall": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAADoklEQVR42u3bQWgcVRwH4P+IpR5aGjBoQYxCg21TswdREGswVoi5SEVCoBWtVNCIB9umBk89FA9haTUexPYi5qAF6UFzkBqwtsStFvWSaFrFIkQEIxEW9KCEsB7KbnfN7HZXJJnI91123ps3kyXvl/fmzUwiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhpSXlj7oFcKa3B7Z9Oph7408N9kaX2yfrNie78b93gV4BwIBwIB8KBcJDtcHRcmF62FOy4MJ2kLRGT9ZuT1Wqf2zFqGbtaujsPlLo7D5R8P0wr1HVjvR233dLX0l/nz79OJitxDBkIR0TEpeN/VLY/6ToVj8zuWbYdEbF9eENl+/Dkkbrn6//+/Thz12BERBzrO1qpb99zIrX921O7Y3/Ph5XywqkhPZa1aWVsYilmRgcr5ZnRwRibWGrpB80f3Bvjb33QsM3JQxtbqmeVwzE2sRRbOtojIuLZ/I815WYDMn9wb1xZWKwZQZoNiGBkdFopuzK30LB8vWBERGxpXxe3vv7e1REkIiK2LWv7/Gu/x8lDG68FYupaPRkLx7qBM/HyQBNnGR5oOGJUB6NcrqcchPO7n444tikeEozsTiuzO3fWfNara2bEqC7Xky/2Rr7YGxfH5+Li+Fzki716KYvhWDzdH12FQkRE5bN6u6tQiMXT/Q2vMapHjHK5UTC2vXEptZ4MjhxpnX+9ffteeLzlEaPs8kvbK9tpQSFjS9m0ENQLxtDWXMMRY2hrrtKmnnIoqoNCRlcrERGffzVbU763Qds7H3s1hiIiPvomdf+J76ZT60fazkW+2LssFCNt5/RU1sJRfecz4p93PjekHtN5x0DLX6L6zuf+lCVuhDujsRaeepb++qXUTF2zvr6nu9RqvaeysbL/mlAdjoiImR/GkoiI42+++686YvjFJxu+Y1E8+2ApIqJt12dJK/U9z12d0Mrfj1UMR0TE2akvWgrIrp77G3bcx/s6as736Phc0kr94cITwuF9DoQD4WCNXnOUvsytyRVAct+0aw8jB8JBdpeym+5+pXTTzTtSG//527eRlX3z558ynRg5EA6EA+FAOBAOhAOEA+FAOBAOhAPhQDiI/9Ej+yMj76ypN8KO5p/x6N7IAQAAAAAAANn1N1jAQMjeVyuqAAAAAElFTkSuQmCC", "ojol": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAB+0lEQVR42u3av0tbURQA4POkIFSw1CENxHYSChnUVf8A54JdzejSP0BwqGi3Tl1Kd91KhS5dOnR0bwsF4U2ppepSpCh0ul0EI6nmJX1ifnzf9h6PO9x7OOfck0QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAwyWxB/0t/DtO1hzhevZFzHLP1CA66dscWDKbphw2ZA2UFZYVezL990fbu4Pt2623FVXYUze08u/Ia+3nldaasoKyMqpmNp0lwcKWJmQdt707zozA+lzlSN0FTRBn9iJ5jCL35+Tv2XjaS4EDPQfHSsRgRtcpSqlWWLmWPH8cfM5kDmYN2zcXZ82xxGI/2vmR6Dq6VmuspNdeTzDGA8s13WS/j8zDnGC2tTeTUZL3j91/zV9m/y0ooK2hI6diACo6h1zqLmJqsJ5lDn1F6ECzk1ahVqqlIEAqOAfSh8in8hxQNKZ3t7G5dPKytlrreyvJzwTEsFvJqTz+aldXDKCuECemA31bKzhxF1pM5kDn6Uf3xkxQRcfLrrOO39+7fLbxu0fW+7b/PNKR9rpuDv431AAAAAAAAgP/wF/L5ZYoUK5I3AAAAAElFTkSuQmCC", "title": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAACHElEQVR42u3dsVXDMBAA0AuPNWCEdDRZillYioaOEZJBTAEp8CMosi1bkv+vbefy3vkUSfYlAgAAAAAAAAAAAAAAUg4lLz58HIdfH/byeSh1/vjY5BfPuFYrcS/twf1BFclxPh2H8ynvTlny/KnXajVulYNiHtf8sKe3n3E2vjN/zvh5a1y/967KiaXVuFUO+qgcf42fERHP7/OzP/da1ztvyvmtxq1yIDmQHEgOJAdmK7dcXrebs+8xbpWDvtY5rnPyNefse45b5aCvFdLxvsJ4LK9Vq3GrHPRROVJjee1ajVvlQHIgOZAcSA7MVpZaP4gCaw25z272GLfKQR+VY8r6wdS1hhL7Ia3GrXJQV+WYOz7mnF/yN0QrcascAACEzj4x7Y3ypWYRpbvvzI07JxadfQgbb7FdZ6C9dN/R2YfY/QrpePdy/GZZbNQ1KGJeXP/ForMPKkdk7lamutSkjq9l13XJ7js6+2C2guRAciA5oKVnSHXfUTlQOUL3HZUDlaMRe+m+o3Kgcui+o3IgOZAcSA4kB6wzW8l9JyO1FjFnfySn+05uXDnPzursg8oRDf6b5BrrHvfEqbMPKscW42PJ7jtrjus6+wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFTvC/cFlnLMMj48AAAAAElFTkSuQmCC"};
 const titleImages = {};
 const titleReady = Promise.all(Object.entries(TITLE_LAYERS).map(([name, src]) => new Promise(res => {
@@ -302,7 +397,7 @@ function start() {
 const VW = 1080, VH = 1920, MARGIN = 54, CONTENT = VW - MARGIN * 2;
 const BOARD_Y = 200;
 const hex = s => parseInt(s.slice(1), 16);
-const C = { blue:'#173FA3', deep:'#0F2C78', yellow:'#FFCB2E', red:'#E23A2E', paper:'#FFF9E8', ink:'#14204D', soft:'#C9D6FF', line:'#C9C2AB', hi:'#FFE9A3', filled:'#2F6FDE' };
+const C = { blue:'#173FA3', deep:'#0F2C78', yellow:'#FFCB2E', red:'#E23A2E', paper:'#FFF9E8', ink:'#14204D', soft:'#C9D6FF', line:'#C9C2AB', hi:'#FFE9A3', filled:'#2F6FDE', pink:'#FFB3C7' };
 const DISPLAY = '"Bungee", "Arial Black", sans-serif', BODY = '"Figtree", system-ui, sans-serif';
 const KEY = 'nonoindo.phaser.v1';
 
@@ -313,6 +408,7 @@ const store = {
 const save = store.read();
 save.best = save.best || {};
 save.grids = save.grids || {};
+save.medals = save.medals || {};
 save.lang = save.lang === 'en' ? 'en' : 'id';
 save.music = save.music !== false;
 save.sfx = save.sfx !== false;
@@ -328,7 +424,7 @@ const I18N = {
       'Each number is the length of a run of filled squares in that row or column, in order. Runs must be separated by at least one empty square. Use Cross to mark squares you are sure are empty.',
     'Isi':'Fill','Silang':'Cross','Urungkan':'Undo','Ulang':'Reset',
     'Geser jari untuk mengisi banyak kotak sekaligus. Ketuk angka untuk mengunci satu baris atau kolom.':'Drag your finger to fill many squares at once. Tap the numbers to lock one row or column.',
-    'Ulang puzzle ini?':'Reset this puzzle?','Semua kotak akan dikosongkan.':'All squares will be cleared.','Batal':'Cancel','Suara':'Sound','Musik':'Music','Nyala':'On','Mati':'Off','Lagu':'Song','Acak':'Random','Musik saat main':'Music during puzzles','Sebelumnya':'Previous','Berikutnya':'Next',
+    'Ulang puzzle ini?':'Reset this puzzle?','Semua kotak akan dikosongkan.':'All squares will be cleared.','Batal':'Cancel','Petunjuk':'Hint','Periksa':'Check','Tips & Trik':'Tips & Tricks','Emas':'Gold','Perak':'Silver','Perunggu':'Bronze','Medali':'Medal','bantuan':'help','Semua kotak yang terisi sudah benar.':'Everything marked so far is correct.','kotak salah ditandai merah.':'wrong squares are marked in red.','Petunjuk sudah dipakai untuk satu kotak.':'Hint placed in one square.','Suara':'Sound','Musik':'Music','Nyala':'On','Mati':'Off','Lagu':'Song','Acak':'Random','Musik saat main':'Music during puzzles','Sebelumnya':'Previous','Berikutnya':'Next',
     'Selesai!':'Done!','Waktu':'Time','rekor baru':'new best','rekor':'best',
     'Main lagi':'Play again','Lihat koleksi':'View collection',
     'Bahasa':'Language','Kategori':'Categories','Segera hadir':'Coming soon',
@@ -438,9 +534,107 @@ function label(scene, x, y, text, opts = {}) {
   return t;
 }
 
+// Icons are drawn with shapes, so they stay sharp and need no image files.
+const ICONS = {
+  fill(g, x, y, s, c) { g.fillStyle(c, 1); g.fillRoundedRect(x - s / 2, y - s / 2, s, s, s * 0.18); },
+  cross(g, x, y, s, c) {
+    const r = s * 0.42;
+    g.lineStyle(s * 0.2, c, 1);
+    g.lineBetween(x - r, y - r, x + r, y + r);
+    g.lineBetween(x + r, y - r, x - r, y + r);
+  },
+  undo(g, x, y, s, c) {
+    g.lineStyle(s * 0.16, c, 1);
+    g.beginPath(); g.arc(x + s * 0.05, y + s * 0.08, s * 0.36, -Math.PI * 0.9, Math.PI * 0.55); g.strokePath();
+    g.fillStyle(c, 1); g.fillTriangle(x - s * 0.5, y - s * 0.32, x - s * 0.02, y - s * 0.5, x - s * 0.1, y + s * 0.02);
+  },
+  reset(g, x, y, s, c) {
+    g.lineStyle(s * 0.16, c, 1);
+    g.beginPath(); g.arc(x, y, s * 0.38, -Math.PI * 0.4, Math.PI * 1.25); g.strokePath();
+    g.fillStyle(c, 1); g.fillTriangle(x + s * 0.02, y - s * 0.56, x + s * 0.02, y - s * 0.06, x + s * 0.42, y - s * 0.34);
+  },
+  hint(g, x, y, s, c) {
+    g.fillStyle(c, 1);
+    g.fillCircle(x, y - s * 0.12, s * 0.32);
+    g.fillRect(x - s * 0.15, y + s * 0.14, s * 0.3, s * 0.16);
+    g.fillRect(x - s * 0.11, y + s * 0.34, s * 0.22, s * 0.1);
+    g.lineStyle(s * 0.08, c, 1);
+    g.lineBetween(x - s * 0.5, y - s * 0.14, x - s * 0.42, y - s * 0.14);
+    g.lineBetween(x + s * 0.42, y - s * 0.14, x + s * 0.5, y - s * 0.14);
+    g.lineBetween(x - s * 0.34, y - s * 0.46, x - s * 0.28, y - s * 0.4);
+    g.lineBetween(x + s * 0.34, y - s * 0.46, x + s * 0.28, y - s * 0.4);
+  },
+  check(g, x, y, s, c) {
+    g.lineStyle(s * 0.15, c, 1);
+    g.strokeCircle(x - s * 0.09, y - s * 0.09, s * 0.3);
+    g.lineStyle(s * 0.2, c, 1);
+    g.lineBetween(x + s * 0.13, y + s * 0.13, x + s * 0.44, y + s * 0.44);
+  },
+  back(g, x, y, s, c) {
+    g.lineStyle(s * 0.2, c, 1);
+    g.lineBetween(x + s * 0.2, y - s * 0.38, x - s * 0.2, y);
+    g.lineBetween(x - s * 0.2, y, x + s * 0.2, y + s * 0.38);
+  },
+  next(g, x, y, s, c) {
+    g.lineStyle(s * 0.2, c, 1);
+    g.lineBetween(x - s * 0.2, y - s * 0.38, x + s * 0.2, y);
+    g.lineBetween(x + s * 0.2, y, x - s * 0.2, y + s * 0.38);
+  },
+  play(g, x, y, s, c) { g.fillStyle(c, 1); g.fillTriangle(x - s * 0.34, y - s * 0.44, x - s * 0.34, y + s * 0.44, x + s * 0.44, y); },
+  plus(g, x, y, s, c) {
+    g.lineStyle(s * 0.22, c, 1);
+    g.lineBetween(x - s * 0.42, y, x + s * 0.42, y);
+    g.lineBetween(x, y - s * 0.42, x, y + s * 0.42);
+  },
+  gear(g, x, y, s, c) {
+    g.lineStyle(s * 0.14, c, 1);
+    g.strokeCircle(x, y, s * 0.26);
+    g.lineStyle(s * 0.16, c, 1);
+    for (let i = 0; i < 8; i++) {
+      const a = i * Math.PI / 4;
+      g.lineBetween(x + Math.cos(a) * s * 0.3, y + Math.sin(a) * s * 0.3, x + Math.cos(a) * s * 0.47, y + Math.sin(a) * s * 0.47);
+    }
+  },
+  note(g, x, y, s, c) {
+    g.fillStyle(c, 1);
+    g.fillCircle(x - s * 0.18, y + s * 0.28, s * 0.17);
+    g.fillRect(x - s * 0.05, y - s * 0.44, s * 0.12, s * 0.72);
+    g.fillTriangle(x + s * 0.05, y - s * 0.44, x + s * 0.42, y - s * 0.2, x + s * 0.05, y - s * 0.12);
+  },
+  speaker(g, x, y, s, c) {
+    g.fillStyle(c, 1);
+    g.fillRect(x - s * 0.46, y - s * 0.16, s * 0.24, s * 0.32);
+    g.fillTriangle(x - s * 0.26, y, x + s * 0.06, y - s * 0.4, x + s * 0.06, y + s * 0.4);
+    g.lineStyle(s * 0.1, c, 1);
+    g.beginPath(); g.arc(x + s * 0.06, y, s * 0.26, -0.8, 0.8); g.strokePath();
+    g.beginPath(); g.arc(x + s * 0.06, y, s * 0.42, -0.8, 0.8); g.strokePath();
+  },
+  shuffle(g, x, y, s, c) {
+    g.lineStyle(s * 0.13, c, 1);
+    g.lineBetween(x - s * 0.48, y - s * 0.28, x + s * 0.24, y + s * 0.28);
+    g.lineBetween(x - s * 0.48, y + s * 0.28, x + s * 0.24, y - s * 0.28);
+    g.fillStyle(c, 1);
+    g.fillTriangle(x + s * 0.18, y - s * 0.48, x + s * 0.5, y - s * 0.28, x + s * 0.18, y - s * 0.08);
+    g.fillTriangle(x + s * 0.18, y + s * 0.08, x + s * 0.5, y + s * 0.28, x + s * 0.18, y + s * 0.48);
+  },
+  book(g, x, y, s, c) {
+    g.fillStyle(c, 1);
+    g.fillRect(x - s * 0.48, y - s * 0.36, s * 0.44, s * 0.7);
+    g.fillRect(x + s * 0.04, y - s * 0.36, s * 0.44, s * 0.7);
+  },
+  globe(g, x, y, s, c) {
+    g.lineStyle(s * 0.11, c, 1);
+    g.strokeCircle(x, y, s * 0.42);
+    g.lineBetween(x - s * 0.42, y, x + s * 0.42, y);
+    g.strokeEllipse(x, y, s * 0.4, s * 0.84);
+  },
+};
+
 function button(scene, x, y, w, h, text, onClick, opts = {}) {
-  const look = { fill: hex(opts.fill || C.deep), strokeW: 0, strokeC: 0 };
-  const gfx = scene.add.graphics();
+  const look = { fill: hex(opts.fill || C.deep), strokeW: 0, strokeC: 0, color: opts.color || C.paper };
+  const gfx = scene.add.graphics(), art = scene.add.graphics();
+  const size = opts.size || 42, iconSize = size * 1.05, iconGap = size * 0.42;
+  const txt = label(scene, x + w / 2, y + h / 2, text, { size, weight: '800', color: look.color }).setOrigin(0.5);
   const draw = () => {
     const pad = look.strokeW / 2, rad = (h - look.strokeW) / 2;
     gfx.clear();
@@ -450,25 +644,40 @@ function button(scene, x, y, w, h, text, onClick, opts = {}) {
       gfx.lineStyle(look.strokeW, look.strokeC, 1);
       gfx.strokeRoundedRect(x + pad, y + pad, w - look.strokeW, h - look.strokeW, rad);
     }
+    art.clear();
+    const cx = x + w / 2, cy = y + h / 2;
+    if (!opts.icon) { txt.setPosition(cx, cy); return; }
+    const full = iconSize + iconGap + (txt.width || 0), left = cx - full / 2;
+    ICONS[opts.icon](art, left + iconSize / 2, cy, iconSize, hex(look.color));
+    txt.setPosition(left + iconSize + iconGap + (txt.width || 0) / 2, cy);
   };
   draw();
-  const txt = label(scene, x + w / 2, y + h / 2, text, { size: opts.size || 42, weight: '800', color: opts.color || C.paper }).setOrigin(0.5);
   const hit = scene.add.zone(x + w / 2, y + h / 2, w, h).setInteractive({ useHandCursor: true });
   const b = {
-    txt, enabled: true, onClick,
+    txt, enabled: true, onClick, art,
     rect: {
       setStrokeStyle(width, color) { look.strokeW = width; look.strokeC = color; draw(); },
       setFillStyle(color) { look.fill = color; draw(); },
     },
-    setEnabled(v) { b.enabled = v; gfx.setAlpha(v ? 1 : 0.45); txt.setAlpha(v ? 1 : 0.45); return b; },
-    setLook(fill, color) { look.fill = hex(fill); draw(); txt.setColor(color); return b; },
-    setVisible(v) { gfx.setVisible(v); txt.setVisible(v); hit.input.enabled = v; return b; },
-    setDepth(d) { gfx.setDepth(d); txt.setDepth(d); hit.setDepth(d); return b; },
-    destroy() { gfx.destroy(); txt.destroy(); hit.destroy(); },
+    layout() { draw(); return b; },
+    setLabel(value) { txt.setText(value); draw(); return b; },
+    setEnabled(v) { b.enabled = v; [gfx, art, txt].forEach(o => o.setAlpha(v ? 1 : 0.45)); return b; },
+    setLook(fill, color) { look.fill = hex(fill); look.color = color; txt.setColor(color); draw(); return b; },
+    setVisible(v) { [gfx, art, txt].forEach(o => o.setVisible(v)); hit.input.enabled = v; return b; },
+    setDepth(d) { [gfx, art, txt].forEach(o => o.setDepth(d)); hit.setDepth(d); return b; },
+    destroy() { [gfx, art, txt, hit].forEach(o => o.destroy()); },
     press() { if (b.enabled) onClick(); },
   };
   hit.on('pointerup', () => b.press());
   return b;
+}
+
+const MEDALS = { 3: ['#F2C230', '#B98A12'], 2: ['#D5DCE4', '#8C97A3'], 1: ['#D18B4F', '#8E5427'] };
+function medal(scene, x, y, r, rank) {
+  const [face, edge] = MEDALS[rank];
+  const disc = scene.add.circle(x, y, r, hex(face)).setStrokeStyle(Math.max(4, r * 0.14), hex(edge));
+  const star = scene.add.star(x, y, 5, r * 0.28, r * 0.62, hex(edge));
+  return [disc.setDepth(3), star.setDepth(3)];
 }
 
 function artTexture(scene, p) {
@@ -510,14 +719,14 @@ class TitleScene extends Phaser.Scene {
     if (this.moving) this.buildAnimation();
     const bw = 300, gap = 30, bx = (VW - bw * 3 - gap * 2) / 2, by = 1760, bh = 116;
     const last = PUZZLES.find(p => p.id === save.last);
-    const style = (b, fill, color) => { b.setLook(fill, color); b.rect.setStrokeStyle(8, hex(C.ink)); b.txt.setFontFamily(DISPLAY).setFontStyle('400'); return b.setDepth(9); };
+    const style = (b, fill, color) => { b.setLook(fill, color); b.rect.setStrokeStyle(8, hex(C.ink)); b.txt.setFontFamily(DISPLAY).setFontStyle('400'); b.layout(); return b.setDepth(9); };
     this.btn = {
       cont: style(button(this, bx, by, bw, bh, t('Lanjut'), () => {
         const fresh = save.best[last.id] !== undefined && !save.grids[last.id];
         this.scene.start('Play', { puzzle: last, fresh });
-      }, { size: 40 }), C.yellow, C.ink).setEnabled(!!last),
-      fresh: style(button(this, bx + bw + gap, by, bw, bh, t('Baru'), () => this.scene.start('Categories'), { size: 40 }), C.paper, C.ink),
-      opts: style(button(this, bx + (bw + gap) * 2, by, bw, bh, t('Opsi'), () => this.scene.start('Options'), { size: 40 }), C.paper, C.ink),
+      }, { size: 40, icon: 'play' }), C.yellow, C.ink).setEnabled(!!last),
+      fresh: style(button(this, bx + bw + gap, by, bw, bh, t('Baru'), () => this.scene.start('Categories'), { size: 40, icon: 'plus' }), C.paper, C.ink),
+      opts: style(button(this, bx + (bw + gap) * 2, by, bw, bh, t('Opsi'), () => this.scene.start('Options'), { size: 40, icon: 'gear' }), C.paper, C.ink),
     };
     label(this, VW / 2, by + bh + 22, `© binjesoft · v${VERSION}`, { size: 30, weight: '800', color: C.ink }).setOrigin(0.5).setDepth(9);
   }
@@ -571,7 +780,7 @@ class OptionsScene extends Phaser.Scene {
   constructor() { super('Options'); }
   create() {
     sfx.music(true);
-    this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Title'), { size: 38 }) };
+    this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Title'), { size: 38, icon: 'back' }) };
     label(this, MARGIN, 165, t('Opsi'), { display: true, size: 76, color: C.yellow, shadow: 5 });
     label(this, MARGIN, 330, t('Bahasa'), { display: true, size: 48 });
     const w = (CONTENT - 30) / 2;
@@ -579,7 +788,7 @@ class OptionsScene extends Phaser.Scene {
       const on = save.lang === code;
       const b = button(this, MARGIN + i * (w + 30), 420, w, 130, name, () => {
         save.lang = code; store.write(save); this.scene.restart();
-      }, { size: 46, fill: on ? C.yellow : C.deep, color: on ? C.ink : C.paper });
+      }, { size: 46, icon: 'globe', fill: on ? C.yellow : C.deep, color: on ? C.ink : C.paper });
       if (on) b.rect.setStrokeStyle(8, hex(C.paper));
     });
     label(this, MARGIN, 600, t('Suara'), { display: true, size: 48 });
@@ -587,7 +796,7 @@ class OptionsScene extends Phaser.Scene {
       const on = save[key];
       this.btn[key] = button(this, MARGIN + i * (w + 30), 690, w, 130, `${name}: ${t(on ? 'Nyala' : 'Mati')}`, () => {
         save[key] = !save[key]; store.write(save); sfx.sync(); this.scene.restart();
-      }, { size: 44, fill: on ? C.yellow : C.deep, color: on ? C.ink : C.soft });
+      }, { size: 44, icon: key === 'music' ? 'note' : 'speaker', fill: on ? C.yellow : C.deep, color: on ? C.ink : C.soft });
       if (on) this.btn[key].rect.setStrokeStyle(8, hex(C.paper));
     });
     label(this, MARGIN, 845, t('Lagu'), { display: true, size: 40 });
@@ -596,20 +805,98 @@ class OptionsScene extends Phaser.Scene {
       const on = save.track === id, x = MARGIN + (i % 3) * (sw + 20), y = 915 + Math.floor(i / 3) * 124;
       this.btn[`song-${id}`] = button(this, x, y, sw, 108, name, () => {
         save.track = id; store.write(save); sfx.changeTrack(); this.scene.restart();
-      }, { size: 38, fill: on ? C.yellow : C.deep, color: on ? C.ink : C.soft });
+      }, { size: 38, icon: id === 'random' ? 'shuffle' : 'note', fill: on ? C.yellow : C.deep, color: on ? C.ink : C.soft });
       if (on) this.btn[`song-${id}`].rect.setStrokeStyle(6, hex(C.paper));
     });
     const during = save.playMusic;
     this.btn.during = button(this, MARGIN, 1175, CONTENT, 116, `${t('Musik saat main')}: ${t(during ? 'Nyala' : 'Mati')}`, () => {
       save.playMusic = !save.playMusic; store.write(save); this.scene.restart();
-    }, { size: 40, fill: during ? C.yellow : C.deep, color: during ? C.ink : C.soft });
+    }, { size: 40, icon: 'note', fill: during ? C.yellow : C.deep, color: during ? C.ink : C.soft });
     if (during) this.btn.during.rect.setStrokeStyle(6, hex(C.paper));
-    const py = 1330, ph = 440;
-    this.add.rectangle(VW / 2, py + ph / 2, CONTENT, ph, hex(C.deep));
-    label(this, MARGIN + 40, py + 34, t('Cara main'), { display: true, size: 42, color: C.yellow });
-    label(this, MARGIN + 40, py + 100,
-      t('Angka menunjukkan panjang kotak terisi yang berurutan di baris atau kolom itu, sesuai urutannya. Antarkelompok wajib ada minimal satu kotak kosong. Pakai Silang untuk menandai kotak yang kamu yakin kosong.'),
-      { size: 38, color: C.soft, wrap: CONTENT - 80, lineSpacing: 8 });
+    const gw = (CONTENT - 30) / 2;
+    this.btn.how = button(this, MARGIN, 1340, gw, 130, GUIDE.how.title[save.lang], () => this.scene.start('Guide', { kind: 'how' }), { size: 42, icon: 'book', fill: C.paper, color: C.ink });
+    this.btn.tips = button(this, MARGIN + gw + 30, 1340, gw, 130, GUIDE.tips.title[save.lang], () => this.scene.start('Guide', { kind: 'tips' }), { size: 42, icon: 'hint', fill: C.paper, color: C.ink });
+  }
+}
+
+class GuideScene extends Phaser.Scene {
+  constructor() { super('Guide'); }
+  init(data) { this.kind = data.kind; this.page = data.page || 0; }
+  create() {
+    sfx.music(true);
+    const book = GUIDE[this.kind], page = book.pages[this.page], lang = save.lang;
+    this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Options'), { size: 38, icon: 'back' }) };
+    label(this, MARGIN, 165, book.title[lang], { display: true, size: 66, color: C.yellow, shadow: 5 });
+    label(this, MARGIN, 262, page.title[lang], { size: 48, weight: '800', wrap: CONTENT });
+    if (page.demo) this.demo(page.demo);
+    if (page.medals) this.medals();
+    label(this, MARGIN, 1200, page.text[lang], { size: 42, color: C.soft, wrap: CONTENT, lineSpacing: 10 });
+    if (page.tools) this.tools();
+    const by = 1745, bw = 340, count = book.pages.length, go = p => this.scene.restart({ kind: this.kind, page: p });
+    this.btn.prev = button(this, MARGIN, by, bw, 116, t('Sebelumnya'), () => go(this.page - 1), { size: 38, icon: 'back' }).setEnabled(this.page > 0);
+    this.btn.next = button(this, VW - MARGIN - bw, by, bw, 116, t('Berikutnya'), () => go(this.page + 1), { size: 38, icon: 'next' }).setEnabled(this.page < count - 1);
+    label(this, VW / 2, by + 58, `${this.page + 1}/${count}`, { size: 44, weight: '800' }).setOrigin(0.5);
+  }
+
+  demo(d) {
+    const s = 124, gutter = 180, size = s * 5, x0 = (VW - size - gutter) / 2 + gutter, y0 = 350 + gutter;
+    const rows = HEART.map(r => runs([...r].map(ch => ch === '#' ? 1 : 0)));
+    const cols = [0, 1, 2, 3, 4].map(c => runs(HEART.map(r => (r[c] === '#' ? 1 : 0))));
+    const g = this.add.graphics();
+    g.fillStyle(hex(C.paper), 1).fillRect(x0 - gutter, y0 - gutter, size + gutter, size + gutter);
+    if (d.row !== undefined) { g.fillStyle(hex(C.hi), 1).fillRect(x0 - gutter, y0 + d.row * s, size + gutter, s); }
+    if (d.col !== undefined) { g.fillStyle(hex(C.hi), 1).fillRect(x0 + d.col * s, y0 - gutter, s, size + gutter); }
+    if (d.pink !== undefined) { g.fillStyle(hex(C.pink), 1).fillRect(x0 - gutter, y0 + d.pink * s, size + gutter, s); }
+    d.marks.forEach((row, r) => [...row].forEach((ch, c) => {
+      const x = x0 + c * s, y = y0 + r * s;
+      if (ch === '#' || ch === '*') { g.fillStyle(hex(ch === '*' ? C.yellow : C.filled), 1).fillRect(x, y, s, s); }
+      if (ch === 'x') {
+        const m = s * 0.28;
+        g.lineStyle(10, hex(C.red), 1);
+        g.lineBetween(x + m, y + m, x + s - m, y + s - m);
+        g.lineBetween(x + s - m, y + m, x + m, y + s - m);
+      }
+    }));
+    g.lineStyle(3, hex(C.line), 1);
+    for (let i = 0; i <= 5; i++) { g.lineBetween(x0 + i * s, y0, x0 + i * s, y0 + size); g.lineBetween(x0, y0 + i * s, x0 + size, y0 + i * s); }
+    g.lineStyle(6, hex(C.ink), 1).strokeRect(x0, y0, size, size);
+    rows.forEach((clue, r) => clue.slice().reverse().forEach((n, i) =>
+      label(this, x0 - 24 - i * 62, y0 + r * s + s / 2, String(n), { size: 60, weight: '800', color: C.ink }).setOrigin(1, 0.5)));
+    cols.forEach((clue, c) => clue.slice().reverse().forEach((n, i) =>
+      label(this, x0 + c * s + s / 2, y0 - 44 - i * 70, String(n), { size: 60, weight: '800', color: C.ink }).setOrigin(0.5)));
+    if (d.arrow) {
+      const [[r1, c1], [r2, c2]] = d.arrow;
+      const ax = x0 + (c1 + 0.5) * s, ay = y0 + (r1 + 0.5) * s, bx = x0 + (c2 + 0.5) * s, by = y0 + (r2 + 0.5) * s;
+      const a = Math.atan2(by - ay, bx - ax), h = 46;
+      const outline = this.add.graphics().setDepth(1);
+      outline.lineStyle(26, hex(C.paper), 1).lineBetween(ax, ay, bx, by);
+      outline.lineStyle(14, hex(C.red), 1).lineBetween(ax, ay, bx, by);
+      outline.fillStyle(hex(C.red), 1).fillTriangle(
+        bx + Math.cos(a) * h, by + Math.sin(a) * h,
+        bx + Math.cos(a + 2.2) * h, by + Math.sin(a + 2.2) * h,
+        bx + Math.cos(a - 2.2) * h, by + Math.sin(a - 2.2) * h);
+    }
+  }
+
+  tools() {
+    const y = 1560, w = (CONTENT - 30) / 2;
+    const pill = (x, text, on, icon) => {
+      const g = this.add.graphics();
+      g.fillStyle(hex(on ? C.yellow : C.deep), 1).fillRoundedRect(x, y, w, 120, 60);
+      ICONS[icon](g, x + 96, y + 60, 48, hex(on ? C.ink : C.soft));
+      label(this, x + w / 2 + 40, y + 60, text, { size: 44, weight: '800', color: on ? C.ink : C.soft }).setOrigin(0.5);
+    };
+    pill(MARGIN, `✓ ${t('Isi')}`, true, 'fill');
+    pill(MARGIN + w + 30, t('Silang'), false, 'cross');
+  }
+
+  medals() {
+    [[3, 'Emas', 0], [2, 'Perak', 1], [1, 'Perunggu', 2]].forEach(([rank, name, i]) => {
+      const x = VW / 2 + (i - 1) * 310;
+      medal(this, x, 640, 110, rank);
+      label(this, x, 800, t(name), { size: 44, weight: '800' }).setOrigin(0.5);
+      label(this, x, 860, `${i} ${t('bantuan')}`, { size: 36, color: C.soft }).setOrigin(0.5);
+    });
   }
 }
 
@@ -617,7 +904,7 @@ class CategoriesScene extends Phaser.Scene {
   constructor() { super('Categories'); }
   create() {
     sfx.music(true);
-    this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Title'), { size: 38 }) };
+    this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Title'), { size: 38, icon: 'back' }) };
     label(this, MARGIN, 165, t('Kategori'), { display: true, size: 76, color: C.yellow, shadow: 5 });
     label(this, MARGIN, 255, t('Tebak gambarnya dari angka, satu kotak demi satu kotak.'), { size: 42, color: C.soft, wrap: CONTENT, lineSpacing: 8 });
     const h = 190, gap = 28, y0 = 420;
@@ -649,7 +936,7 @@ class HomeScene extends Phaser.Scene {
   create() {
     sfx.music(true);
     const all = this.cat.puzzles, start = this.page * PER_PAGE, list = all.slice(start, start + PER_PAGE);
-    this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Categories'), { size: 38 }) };
+    this.btn = { back: button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.scene.start('Categories'), { size: 38, icon: 'back' }) };
     label(this, MARGIN, 165, t('Koleksi'), { display: true, size: 76, color: C.yellow, shadow: 5 });
     label(this, MARGIN, 265, catName(this.cat), { display: true, size: 50 });
     const solved = all.filter(p => save.best[p.id] !== undefined).length;
@@ -661,6 +948,7 @@ class HomeScene extends Phaser.Scene {
       const frame = this.add.rectangle(x + w / 2, y + w / 2, w, w, hex(C.deep)).setStrokeStyle(8, hex(C.yellow));
       if (has) this.add.image(x + w / 2, y + w / 2, artTexture(this, p)).setDisplaySize(w - 8, w - 8);
       else label(this, x + w / 2, y + w / 2, '?', { display: true, size: 130, color: C.yellow }).setOrigin(0.5);
+      if (save.medals[p.id]) medal(this, x + w - 44, y + 44, 40, save.medals[p.id]);
       frame.setInteractive({ useHandCursor: true });
       frame.on('pointerup', () => this.scene.start('Play', { puzzle: p, fresh: has }));
       label(this, x, y + w + 18, has ? p.name : 'Puzzle ' + (start + i + 1), { size: 38, weight: '800', wrap: w });
@@ -670,8 +958,8 @@ class HomeScene extends Phaser.Scene {
 
     if (this.pageCount > 1) {
       const by = 1745, bw = 340, go = page => this.scene.restart({ cat: this.cat.id, page });
-      this.btn.prev = button(this, MARGIN, by, bw, 116, t('Sebelumnya'), () => go(this.page - 1), { size: 38 }).setEnabled(this.page > 0);
-      this.btn.next = button(this, VW - MARGIN - bw, by, bw, 116, t('Berikutnya'), () => go(this.page + 1), { size: 38 }).setEnabled(this.page < this.pageCount - 1);
+      this.btn.prev = button(this, MARGIN, by, bw, 116, t('Sebelumnya'), () => go(this.page - 1), { size: 38, icon: 'back' }).setEnabled(this.page > 0);
+      this.btn.next = button(this, VW - MARGIN - bw, by, bw, 116, t('Berikutnya'), () => go(this.page + 1), { size: 38, icon: 'next' }).setEnabled(this.page < this.pageCount - 1);
       label(this, VW / 2, by + 58, `${this.page + 1}/${this.pageCount}`, { size: 44, weight: '800' }).setOrigin(0.5);
     }
   }
@@ -686,13 +974,14 @@ class PlayScene extends Phaser.Scene {
     save.last = this.puzzle.id; store.write(save);
     this.board = new Board(this.puzzle, saved && saved.g);
     this.elapsed = saved ? saved.t : 0;
-    this.tool = FILL; this.done = false; this.focus = null; this.keyCursor = false; this.lock = null; this.dialog = null;
+    this.tool = FILL; this.done = false; this.focus = null; this.keyCursor = false; this.lock = null; this.dialog = null; this.wrong = []; this.busy = false;
+    this.used = { hint: !!(saved && saved.u && saved.u.hint), check: !!(saved && saved.u && saved.u.check) };
   }
   create() {
     sfx.music(save.playMusic, 0.4);
     const p = this.puzzle;
     this.btn = {};
-    this.btn.back = button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.toHome(), { size: 38 });
+    this.btn.back = button(this, MARGIN, 40, 240, 110, t('Kembali'), () => this.toHome(), { size: 38, icon: 'back' });
     this.titleText = label(this, VW / 2, 95, `Puzzle ${catOf(p.cat).puzzles.indexOf(p) + 1}`, { display: true, size: 46, color: C.yellow }).setOrigin(0.5);
     this.clock = label(this, VW - MARGIN, 95, fmt(this.elapsed), { size: 46, weight: '800' }).setOrigin(1, 0.5);
 
@@ -705,13 +994,18 @@ class PlayScene extends Phaser.Scene {
     this.buildClues();
 
     const ty = BOARD_Y + CONTENT + 36, half = (CONTENT - 30) / 2;
-    this.btn.fill = button(this, MARGIN, ty, half, 140, t('Isi'), () => this.setTool(FILL), { size: 46 });
-    this.btn.cross = button(this, MARGIN + half + 30, ty, half, 140, t('Silang'), () => this.setTool(CROSSED), { size: 46 });
+    this.btn.fill = button(this, MARGIN, ty, half, 140, t('Isi'), () => this.setTool(FILL), { size: 46, icon: 'fill' });
+    this.btn.cross = button(this, MARGIN + half + 30, ty, half, 140, t('Silang'), () => this.setTool(CROSSED), { size: 46, icon: 'cross' });
     const ay = ty + 170, aw = (CONTENT - 30) / 2;
-    this.btn.undo = button(this, MARGIN, ay, aw, 124, t('Urungkan'), () => this.doUndo());
-    this.btn.reset = button(this, MARGIN + aw + 30, ay, aw, 124, t('Ulang'), () => this.askReset());
+    this.btn.undo = button(this, MARGIN, ay, aw, 124, t('Urungkan'), () => this.doUndo(), { icon: 'undo' });
+    this.btn.reset = button(this, MARGIN + aw + 30, ay, aw, 124, t('Ulang'), () => this.askReset(), { icon: 'reset' });
     this.btn.undo.setEnabled(false);
-    this.note = label(this, MARGIN, ay + 150, t('Geser jari untuk mengisi banyak kotak sekaligus. Ketuk angka untuk mengunci satu baris atau kolom.'), { size: 36, color: C.soft, wrap: CONTENT, lineSpacing: 6 });
+    const hy = ay + 150;
+    this.btn.hint = button(this, MARGIN, hy, aw, 124, t('Petunjuk'), () => this.useHint(), { icon: 'hint', fill: C.paper, color: C.ink });
+    this.btn.check = button(this, MARGIN + aw + 30, hy, aw, 124, t('Periksa'), () => this.useCheck(), { icon: 'check', fill: C.paper, color: C.ink });
+    this.btn.hint.setEnabled(!this.used.hint);
+    this.btn.check.setEnabled(!this.used.check);
+    this.note = label(this, MARGIN, hy + 150, t('Geser jari untuk mengisi banyak kotak sekaligus. Ketuk angka untuk mengunci satu baris atau kolom.'), { size: 36, color: C.soft, wrap: CONTENT, lineSpacing: 6 });
     this.setTool(FILL);
 
     this.input.on('pointerdown', q => this.onDown(q));
@@ -760,6 +1054,11 @@ class PlayScene extends Phaser.Scene {
       g.fillRect(MARGIN, oy + this.focus.r * cell, CONTENT, cell);
       g.fillRect(ox + this.focus.c * cell, BOARD_Y, cell, CONTENT);
     }
+    g.fillStyle(hex(C.pink), 1);
+    for (let i = 0; i < N; i++) {
+      if (this.board.lineImpossible(i, true)) g.fillRect(MARGIN, oy + i * cell, CONTENT, cell);
+      if (this.board.lineImpossible(i, false)) g.fillRect(ox + i * cell, BOARD_Y, cell, CONTENT);
+    }
     for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
       const x = ox + c * cell, y = oy + r * cell, v = grid[r][c];
       if (v === FILL) { g.fillStyle(hex(C.filled), 1); g.fillRect(x, y, cell, cell); }
@@ -792,6 +1091,10 @@ class PlayScene extends Phaser.Scene {
       if (row) g.strokeRect(ox, oy + i * cell, size, cell);
       else g.strokeRect(ox + i * cell, oy, cell, size);
     }
+    if (this.wrong.length) {
+      g.lineStyle(8, hex(C.red), 1);
+      this.wrong.forEach(p => g.strokeRect(ox + p.c * cell + 4, oy + p.r * cell + 4, cell - 8, cell - 8));
+    }
     if (this.keyCursor && this.focus) {
       g.lineStyle(6, hex(C.red), 1);
       g.strokeRect(ox + this.focus.c * cell, oy + this.focus.r * cell, cell, cell);
@@ -818,11 +1121,12 @@ class PlayScene extends Phaser.Scene {
     this.paint();
   }
   beginStroke(p) {
+    this.wrong = [];
     this.board.begin(p, this.tool);
     if (this.lock) this.board.stroke.axis = this.lock.type === 'row' ? 'h' : 'v';
   }
   onDown(q) {
-    if (this.done || this.dialog) return;
+    if (this.done || this.dialog || this.busy) return;
     const p = this.cellAt(q);
     const inRows = p.r >= 0 && p.r < N, inCols = p.c >= 0 && p.c < N;
     if (p.c < 0 && inRows && q.worldX >= MARGIN) return this.toggleLock('row', p.r);
@@ -853,7 +1157,7 @@ class PlayScene extends Phaser.Scene {
     if (this.board.isWon()) this.win();
   }
   onKey(e) {
-    if (this.done || this.dialog) return;
+    if (this.done || this.dialog || this.busy) return;
     const dir = { ArrowUp:[-1,0], ArrowDown:[1,0], ArrowLeft:[0,-1], ArrowRight:[0,1] }[e.key];
     const clamp = v => Math.min(N - 1, Math.max(0, v));
     if (dir) {
@@ -877,12 +1181,84 @@ class PlayScene extends Phaser.Scene {
     this.tool = t2;
     const look = (b, name, on) => {
       b.setLook(on ? C.yellow : C.deep, on ? C.ink : C.soft);
-      b.txt.setText(on ? `✓ ${name}` : name);
+      b.setLabel(on ? `✓ ${name}` : name);
     };
     look(this.btn.fill, t('Isi'), t2 === FILL);
     look(this.btn.cross, t('Silang'), t2 === CROSSED);
   }
+  useHint() {
+    if (this.used.hint || this.done || this.dialog || this.busy) return;
+    const p = this.board.pickHint();
+    if (!p) return;
+    this.used.hint = true;
+    this.btn.hint.setEnabled(false);
+    this.wrong = [];
+    this.board.pushUndo();
+    const value = this.board.want(p.r, p.c);
+    this.board.grid[p.r][p.c] = value;
+    sfx[value]();
+    this.focus = p;
+    this.btn.undo.setEnabled(true);
+    this.note.setText(t('Petunjuk sudah dipakai untuk satu kotak.'));
+    this.persist(); this.paint();
+    if (!this.calm()) this.hintEffect(p);
+    if (this.board.isWon()) this.win();
+  }
+  calm() { return matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  hintEffect(p) {
+    const { cell, ox, oy } = this.geo, x = ox + (p.c + 0.5) * cell, y = oy + (p.r + 0.5) * cell;
+    const ring = this.add.rectangle(x, y, cell, cell).setStrokeStyle(10, hex(C.yellow)).setDepth(5).setScale(4).setAlpha(0);
+    this.tweens.add({ targets: ring, scale: 1, alpha: 1, duration: 420, ease: 'Back.easeOut', yoyo: true, hold: 260, onComplete: () => ring.destroy() });
+    const bulb = this.add.graphics().setDepth(6).setPosition(x, y);
+    bulb.fillStyle(hex(C.deep), 1).fillCircle(0, 0, cell * 0.72);
+    ICONS.hint(bulb, 0, 0, cell * 0.95, hex(C.yellow));
+    this.tweens.add({ targets: bulb, y: y - cell * 1.8, alpha: 0, duration: 900, ease: 'Sine.easeOut', onComplete: () => bulb.destroy() });
+    this.sparks(x, y, 18);
+  }
+  sparks(x, y, count) {
+    this.ensureSpark();
+    this.add.particles(x, y, 'confetti', {
+      speed: { min: 120, max: 420 }, angle: { min: 0, max: 360 }, lifespan: 520,
+      scale: { start: 0.9, end: 0 }, tint: [hex(C.yellow), hex(C.paper)], emitting: false,
+    }).setDepth(6).explode(count);
+  }
+  ensureSpark() {
+    if (this.textures.exists('confetti')) return;
+    const tx = this.textures.createCanvas('confetti', 14, 14);
+    const x = tx.getContext(); x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, 14, 14); tx.refresh();
+  }
+  useCheck() {
+    if (this.used.check || this.done || this.dialog || this.busy) return;
+    this.used.check = true;
+    this.btn.check.setEnabled(false);
+    const found = this.board.wrongCells();
+    const finish = () => {
+      this.busy = false;
+      this.wrong = found;
+      this.note.setText(found.length ? `${found.length} ${t('kotak salah ditandai merah.')}` : t('Semua kotak yang terisi sudah benar.'));
+      this.persist(); this.paint();
+      if (!this.calm()) this.checkResult(found);
+    };
+    if (this.calm()) { finish(); return; }
+    this.busy = true;
+    const { cell, ox, oy } = this.geo, size = cell * N;
+    const beam = this.add.rectangle(ox + size / 2, oy, size, cell * 1.2, hex(C.yellow), 0.45).setDepth(5);
+    const lens = this.add.graphics().setDepth(6).setPosition(ox - cell * 0.1, oy);
+    lens.fillStyle(hex(C.deep), 1).fillCircle(0, 0, cell * 0.9);
+    ICONS.check(lens, 0, 0, cell * 1.15, hex(C.yellow));
+    this.tweens.add({ targets: [beam, lens], y: oy + size, duration: 760, ease: 'Sine.easeInOut', onComplete: () => { beam.destroy(); lens.destroy(); finish(); } });
+    this.tweens.add({ targets: lens, x: ox + size * 0.9, duration: 190, yoyo: true, repeat: 1, ease: 'Sine.easeInOut' });
+  }
+  checkResult(found) {
+    const { cell, ox, oy } = this.geo;
+    if (!found.length) { this.sparks(ox + cell * N / 2, oy + cell * N / 2, 26); return; }
+    found.forEach(p => {
+      const box = this.add.rectangle(ox + (p.c + 0.5) * cell, oy + (p.r + 0.5) * cell, cell, cell, hex(C.red), 0.7).setDepth(5);
+      this.tweens.add({ targets: box, alpha: 0, duration: 260, yoyo: true, repeat: 2, onComplete: () => box.destroy() });
+    });
+  }
   doUndo() {
+    this.wrong = [];
     this.board.undo();
     this.btn.undo.setEnabled(this.board.undoStack.length > 0);
     this.persist(); this.paint();
@@ -901,18 +1277,19 @@ class PlayScene extends Phaser.Scene {
       no.destroy(); yes.destroy();
       this.dialog = null;
     };
-    const no = button(this, x + 50, by, bw, 120, t('Batal'), close).setDepth(12);
-    const yes = button(this, x + w - 50 - bw, by, bw, 120, t('Ulang'), () => { close(); this.doReset(); }, { fill: C.red }).setDepth(12);
+    const no = button(this, x + 50, by, bw, 120, t('Batal'), close, { icon: 'cross' }).setDepth(12);
+    const yes = button(this, x + w - 50 - bw, by, bw, 120, t('Ulang'), () => { close(); this.doReset(); }, { icon: 'reset', fill: C.red }).setDepth(12);
     this.dialog = { no, yes };
   }
   doReset() {
+    this.wrong = [];
     this.board.reset();
     this.btn.undo.setEnabled(true);
     this.persist(); this.paint();
   }
   persist() {
     if (this.done) return;
-    save.grids[this.puzzle.id] = { g: this.board.grid, t: this.elapsed };
+    save.grids[this.puzzle.id] = { g: this.board.grid, t: this.elapsed, u: this.used };
     store.write(save);
   }
   toHome() {
@@ -925,11 +1302,13 @@ class PlayScene extends Phaser.Scene {
     this.ticker.remove();
     const id = this.puzzle.id, best = save.best[id], isBest = best === undefined || this.elapsed < best;
     if (isBest) save.best[id] = this.elapsed;
+    this.rank = 3 - (this.used.hint ? 1 : 0) - (this.used.check ? 1 : 0);
+    save.medals[id] = Math.max(save.medals[id] || 0, this.rank);
     delete save.grids[id];
     store.write(save);
     this.focus = null;
     this.titleText.setText(t('Selesai!'));
-    ['fill', 'cross', 'undo', 'reset'].forEach(k => this.btn[k].setVisible(false));
+    ['fill', 'cross', 'undo', 'reset', 'hint', 'check'].forEach(k => this.btn[k].setVisible(false));
     this.note.setVisible(false);
     this.result = isBest ? `${t('Waktu')} ${fmt(this.elapsed)} · ${t('rekor baru')}` : `${t('Waktu')} ${fmt(this.elapsed)} · ${t('rekor')} ${fmt(best)}`;
 
@@ -966,10 +1345,7 @@ class PlayScene extends Phaser.Scene {
   }
 
   confetti() {
-    if (!this.textures.exists('confetti')) {
-      const t = this.textures.createCanvas('confetti', 14, 14);
-      const x = t.getContext(); x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, 14, 14); t.refresh();
-    }
+    this.ensureSpark();
     const em = this.add.particles(VW / 2, BOARD_Y + CONTENT / 2, 'confetti', {
       speed: { min: 350, max: 1000 }, angle: { min: 0, max: 360 }, gravityY: 1100,
       lifespan: 1200, scale: { start: 1.3, end: 0.3 }, rotate: { min: 0, max: 360 },
@@ -983,13 +1359,15 @@ class PlayScene extends Phaser.Scene {
     label(this, MARGIN, y, p.name, { display: true, size: 74, color: C.yellow, shadow: 5 });
     label(this, MARGIN, y + 100, p.caption, { size: 46, weight: '700', wrap: CONTENT, lineSpacing: 6 });
     label(this, MARGIN, y + 250, this.result, { size: 38, color: C.soft });
+    medal(this, VW - MARGIN - 48, y + 272, 46, this.rank);
+    label(this, VW - MARGIN - 110, y + 272, t(['', 'Perunggu', 'Perak', 'Emas'][this.rank]), { size: 40, weight: '800', color: C.yellow }).setOrigin(1, 0.5);
     const by = y + 320, w = (CONTENT - 30) / 2;
-    this.btn.again = button(this, MARGIN, by, w, 124, t('Main lagi'), () => this.scene.restart({ puzzle: p, fresh: true }));
+    this.btn.again = button(this, MARGIN, by, w, 124, t('Main lagi'), () => this.scene.restart({ puzzle: p, fresh: true }), { icon: 'reset' });
     this.btn.next = button(this, MARGIN + w + 30, by, w, 124, idx < list.length - 1 ? t('Lanjut') : t('Lihat koleksi'), () => {
       const n = list[idx + 1];
       if (n) this.scene.start('Play', { puzzle: n, fresh: save.best[n.id] !== undefined });
       else this.toHome();
-    }, { fill: C.yellow, color: C.ink });
+    }, { icon: 'next', fill: C.yellow, color: C.ink });
   }
 }
 
@@ -1002,7 +1380,7 @@ function boot() {
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     input: { activePointers: 2 },
     banner: false,
-    scene: [TitleScene, OptionsScene, CategoriesScene, HomeScene, PlayScene],
+    scene: [TitleScene, OptionsScene, GuideScene, CategoriesScene, HomeScene, PlayScene],
   });
 }
 boot();
