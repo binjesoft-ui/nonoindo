@@ -535,15 +535,19 @@ const sfx = (() => {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     if (!ctx) { try { ctx = new AC(); } catch { return; } }
+    if (away) return;
     if (ctx.state === 'suspended') ctx.resume().then(sync);
     else sync();
   };
   ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach(e => document.addEventListener(e, unlock, { passive: true }));
-  document.addEventListener('visibilitychange', () => {
+  let away = false;
+  const setAway = hidden => {
+    away = hidden;
     if (!ctx) return;
-    if (document.hidden) ctx.suspend();
+    if (hidden) ctx.suspend();
     else ctx.resume().then(sync);
-  });
+  };
+  document.addEventListener('visibilitychange', () => setAway(document.hidden));
   const blip = (type, from, to, dur, vol) => {
     if (!save.sfx || !running()) return;
     const now = ctx.currentTime;
@@ -564,6 +568,7 @@ const sfx = (() => {
     [CROSSED]: () => blip('square', 1500, 900, 0.05, 0.1),
     [EMPTY]: () => blip('sine', 520, 340, 0.05, 0.12),
     music(on, volume = 0.75) { wanted = on; level = volume; sync(); },
+    setAway,
     changeTrack() { if (running()) stopBand(); sync(); },
     sync,
   };
@@ -1455,7 +1460,26 @@ function boot() {
     scene: [TitleScene, OptionsScene, GuideScene, CategoriesScene, HomeScene, PlayScene],
   });
 }
+// Android app only: the back button goes back one screen, and sound stops in the background.
+function androidHooks(game) {
+  const cap = window.Capacitor;
+  if (!cap || !cap.isNativePlatform || !cap.isNativePlatform()) return;
+  const App = (cap.Plugins && cap.Plugins.App) || (cap.registerPlugin && cap.registerPlugin('App'));
+  if (!App) return;
+  App.addListener('appStateChange', state => sfx.setAway(!state.isActive));
+  App.addListener('backButton', () => {
+    const scene = game.scene.getScenes(true)[0];
+    if (!scene) return;
+    if (scene.dialog) { scene.dialog.no.press(); return; }
+    if (scene.scene.key === 'Title') { App.exitApp(); return; }
+    const exit = scene.btn && (scene.btn.back || scene.btn.skip);
+    if (exit) exit.press();
+    else scene.scene.start('Title');
+  });
+}
+
 boot();
+androidHooks(window.nonoGame);
 }
 </script>
 

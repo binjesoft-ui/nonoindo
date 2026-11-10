@@ -27,7 +27,7 @@ Made by binjesoft.
 | Music and sound | Web Audio API, generated in code |
 | Saves | Browser `localStorage` |
 | Tools | Python with Pillow, and Node.js |
-| Android app | Capacitor (in progress) |
+| Android app | Capacitor 8, built by GitHub Actions |
 | Web hosting | Vercel |
 
 ## Project layout
@@ -46,12 +46,17 @@ Made by binjesoft.
 | `tools/app_art.py` | Redraws the Android icon and splash images |
 | `tools/build_app.js` | Builds the offline game into `www/` for the Android app |
 | `capacitor.config.json`, `package.json` | Android app name, ID (`com.binjesoft.nonoindo`), and build packages |
+| `tools/android_res.py` | Makes Android launcher icons and the splash image in `assets/android/res/` |
+| `tools/android_setup.js` | Applies portrait mode, version, icons, and splash to the generated Android project |
+| `.github/workflows/android.yml` | Builds the debug APK on every push to `main` |
+| `privacy.html` | Privacy policy, in Indonesian and English |
 
 ## Running it (for the owner and approved collaborators)
 
 - **Web:** Serve the repository folder with any static web server and open `index.html`. The web version loads Phaser and fonts from the internet.
 - **Puzzle check:** Run `python3 tools/check_data.py sheet.png` from the repository root. It must end with `0 failed`.
 - **Offline build:** Run `npm install`, then `node tools/build_app.js`. This creates `www/` with Phaser and the fonts included.
+- **Android APK:** GitHub Actions builds it on every push to `main`. Open the **Android build** run and download `nonoindo-debug-apk` from **Artifacts**. To build locally, install Android Studio and JDK 21, then run `npm install`, `node tools/build_app.js`, `npx cap add android`, `node tools/android_setup.js`, `npx cap sync android`, and `cd android && ./gradlew assembleDebug`.
 
 ## Third-party components
 

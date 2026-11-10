@@ -4,13 +4,23 @@
   "private": true,
   "description": "NonoIndo Android app build files",
   "scripts": {
-    "build:app": "node tools/build_app.js"
+    "build:app": "node tools/build_app.js",
+    "android:setup": "node tools/android_setup.js"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.0.0",
     "@fontsource/bungee": "^5.0.0",
     "@fontsource/figtree": "^5.0.0",
     "phaser": "3.80.1"
   },
   "license": "SEE LICENSE IN LICENSE",
-  "author": "binjesoft"
+  "author": "binjesoft",
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/core": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
 }
