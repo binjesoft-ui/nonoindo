@@ -1,6 +1,6 @@
 # NonoIndo
 
-NonoIndo is a phone-first nonogram (picross) game. Each solved puzzle reveals pixel art of everyday Indonesian life, such as bakso, angkot, Monas, and wayang.
+NonoIndo is a phone-first nonogram (picross) game. Each solved puzzle reveals pixel art of everyday Indonesian life, such as bakso, sate, Monas, and bajaj.
 
 Made by binjesoft.
 
@@ -8,7 +8,7 @@ Made by binjesoft.
 
 ## Features
 
-- 76 solver-checked 10x10 and 15x15 puzzles across 10 categories, from Kuliner to Perayaan
+- 126 solver-checked 10x10 and 15x15 puzzles across 10 categories, from Kuliner to Perayaan
 - Every puzzle has one solution and can be solved by logic, without guessing
 - Drag-to-fill, Isi and Silang tools, undo, and row or column lock
 - Pink highlight when a line can no longer match its numbers
@@ -50,6 +50,7 @@ Made by binjesoft.
 | `tools/android_setup.js` | Applies portrait mode, version, icons, and splash to the generated Android project |
 | `.github/workflows/android.yml` | Builds the debug APK on every push to `main` |
 | `privacy.html` | Privacy policy, in Indonesian and English |
+| `terms.html` | Terms of service, in Indonesian and English |
 
 ## Running it (for the owner and approved collaborators)
 

@@ -315,6 +315,20 @@ class Board {
     });
     return !placements(isRow ? this.puzzle.rows[i] : this.puzzle.cols[i]).some(p => (p & fill) === fill && (p & cross) === 0);
   }
+  // When a row or column touched by a move matches its numbers, cross its remaining empty squares.
+  autoCross(cells) {
+    let crossed = 0;
+    const fill = (i, isRow) => {
+      if (!this.lineDone(i, isRow)) return;
+      for (let j = 0; j < N; j++) {
+        const r = isRow ? i : j, c = isRow ? j : i;
+        if (this.grid[r][c] === EMPTY) { this.grid[r][c] = CROSSED; crossed++; }
+      }
+    };
+    new Set(cells.map(p => p.r)).forEach(r => fill(r, true));
+    new Set(cells.map(p => p.c)).forEach(c => fill(c, false));
+    return crossed;
+  }
   want(r, c) { return this.puzzle.art[r][c] === '.' ? CROSSED : FILL; }
   // One random unfinished square, taken from the outer edge while any remain there.
   pickHint() {
@@ -351,11 +365,12 @@ class Board {
     if (this.grid[p.r][p.c] !== this.stroke.startV) return;
     this.grid[p.r][p.c] = this.stroke.paint;
     this.stroke.changed++;
+    this.stroke.touched.push(p);
   }
   begin(p, tool) {
     const startV = this.grid[p.r][p.c];
     this.pushUndo();
-    this.stroke = { startV, paint: startV === tool ? EMPTY : tool, last: p, origin: p, axis: null, changed: 0, heard: 0 };
+    this.stroke = { startV, paint: startV === tool ? EMPTY : tool, last: p, origin: p, axis: null, changed: 0, heard: 0, touched: [] };
     this.apply(p);
   }
   move(p) {
@@ -424,7 +439,7 @@ for (const c of CATEGORIES) c.puzzles.sort((a, b) => a.art.length - b.art.length
 </script>
 
 <script>
-const VERSION = '0.9.0';
+const VERSION = '0.11.0';
 const TITLE_LAYERS = {"sky": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAEuElEQVR42u3dvWtVZxwH8N95uBiTTFZFS0ERKkI0KPiySodIa6Bx6iAuQofOZqmVDkVCXbpnKDjYKYM4aCkK/gGthRZfoCjUFkTBviyNaatwO9gXuc2tBHN7n+c5n8/yRQh6znO+9/eccxJMs+nguW7AMpIlGLz508eKPJbG5MDkyOQT++DyVDHHbHJgcqAcKEf7njKKK0fti/fO+5+0upjV3JDOnz421ItZI08ruOcoRU7vQZQjsz1/86ErthUK2FbWj62LiAgpezP9+OjnWD+2LmR++eDy1FD//ZTDQsydnFaIZXLzoStDXadm08FzXRdCZjs52pY3L+wr4jhX5Z5j/vQxC76C3HnkWhHH2Uy8cdGj7IDdvLAvdh655g1pDuZOTr/wxVxNJRYjIkwOvD43HZUjvwUelFMfXrKtYFshw4lqcmByoBwoh6eY8BIMk4N8y7FtzVhI2Ztp25qx+Pb3RyFlbyYLIfulySFNjhxz7uR01sfXTM9c7bpQcrlspmeues+B9xyD8vbsa3W+ITU5MDkovxy1jujSXFyYsK1gW0E5WM1t27aCyYFyoBwoB8Mtx+5YiogIKXszfR2jsTuWQsreTBZC9kuTQ5oc0uSQq5jNezOXBvr6fP/s4fjio0///vPcwt449daXnhMz0u+aDLwceAlGwfbPHm5XOeYW9q7q19Xs2W3ftoJtBeVAOVAOlAPlQDlQDpQDIiLSgbgfERFS9mb6PF6OA3E/pOzNZCFkvzQ5pMkhV57NhZmPfcsej7IoB8qBcqAcKAfKgXKgHCgHKAfKgXIw0HLsGb8VUvZm2jN+K75anAgpezNZCNkvTQ5pcsiVZ3P36Ak/JohHWZQD5UA5UA6UA+VAOSqz9cxai/CMjou/sq/57t1flcM0eP7fV3tROkrx4v9GrSXpKIRpUv0NaS43kzXd1KYNO+5ERESpufXM2uwuyLPHVPL6ph++eTU27LgTJWbun9KtZ9ZGyeubFENB+mVz9+iJbkkHPH58V7F7+OLZGyaHYixv/PiusibHLx+82S1lYWuxePaGR1m85zA1Kj2fZCGdV5HlqLUYpZyfew7KK0ftU6OE80wWzPnaVlAOKi5H27aUnM/b5KCMcrR1auR6/iYH/12OkcmlyCGJyOl6NI/PT3V/uz4aI5NLMcwcf/0nrfjT4mcvDf16jEwuRcqhGCbHvydHDtcl5XIg/COXD6zJYXL0zebx+aksfkyw84qC/OXJvVGPsngJhnKgHO43lKONN2DYVlAOlAPlQDkI/2GcJxaTA5PDy7AqJ2jqbN/49MJkkq3/tGZ0PdKT2w+js31j5JBE5HQ9Ui4H0tm+sfU3pU/ujUZO1yOrydH2rSWrD2p2k+P2w4ixLU8nSBszsw9q071+1C8dpqDfmvDo+/ZdibEtXoKVulBtPN9kwZyn1+dUVo7ap0fm59exgNhWqPgXANb0eFvINEwW1HnUsa2UXpDCjr9T7AKXtM0UWurkU+g46/yN1B5zTQ5MjjoedyuaZp1qX0f/n0WpdHvrRFT+fYtBlqTye55ORIu+Jb4aRXETDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQ/cHfG+EQsNWnCoAAAAASUVORK5CYII=", "city": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAFeklEQVR42u3dPYgcZRwH4HePQYSAhcUp7GmRs4nERbAQi2BIcYiFwUKIcifEwsImVhYWgpZWBkSwMUKCH1VMoeSuOBWLK+zOoIW5K6IL5gghiN4dNmshe5mMM7Ozezu7szPPA4HsZfbj3ve3//djZjchAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA0Ei9G2/3tMJdc5oA4VA9GNVf777QEwyVI9WRs8dVDuFAOBAOytPSBCEsLiz/b56x9fullsoBwpEtWSVUDeFAOBAOhAPhQDgQDoQD4UA4EA4QDoQD4UA4EA6Eg/qFoz2/1GvPL/Wacg1p2jWlwgHCQRFR2hCSN7wkf9bdWXMxblPCkdbZ/VD0/y15m4aEo4hkSARFOEJelVFNhEM1aXo4sialyZ+ndX5aNRGUGoUj2ZFZE1LDjmFl4BBSpMOzgiUsNQvHG89+ck8HXwnh4PbpY2cKP85H37/WMvTUfEIaD8SVX74YKiTmKA1YrSSD0g/JOIIiLDUJxziqSd6kOPnvySEuOWzp4uHE2zmaxBMeppoMCssowaPYubJoki8mWU0Os7xNVo548Joor4Jmtc+gdo+m9cucPnbmoOyPYyKaVjniq6imzF+y3iTx9ik63EZV+IXKWrFk3T9ZTvf/2Tn4+/33zYcQ/rsarKrfDZY2HJQxvEaDylH8iYscW1ZQxvmOjz9O8pLAeFCK7ASP4zUNewlm2nOW0TdRqLC8FUtZQ0O/coRQ7FsFx3FtbVWHuUqHo0hVmfZqpc7zl2hWX7jVSvlzmWjWl2jDrlbstBa/HjiqcwPkXQ8bn4DG5xllBngaO7dpFbU9v9Qr8iaZmXD80N0c6vgT7U6hwCwuLPfiK5S861iqXAWK7G9MZJ9j2I7K66wqyKoc/dXKoBXJMB1Txsqnu7PWatxStsrDU5FhJSs0WSHo7qy1nnjszaE6+afrH7RmarWyeXkndF6cb3yosipH1c8W98NeSjgEox4rwJkbVrKqkmo12gm5vCoXTaszx12VmhKMrPbMWyTc/vPnQuFJBqT0cHg3T689Nz9fD52XT4UHH3g8hBDCx6/fTj3u0tcnQ62/gmHz8o7kJNph49snMwNRidXKpOYCVa9Q8bKftVw90e4MvYfUn1z27zfOdih9tZL3YidxfQihmd/sEy+howwrg777q4zvBpvk8NfZuxM6e3fCxsp22FjZPrid/PP+qa/SK8coW+FV2RArWqFmdUI57WV6I1crw1SE/rHTvJ50Wm0Y2Uia3j5FGe0df8xnLh69u3JZ2R76ZGpkT2J6VSCvvUcNUdZxR84ez7/jxV1nZesWoqL+vnBtwBFHpz+slD0BNqyM7zFrP6yMazma9jijTFKnNazM1D6H7e5qLtPj/TKX1Ulld944fmEBK7df5g5zCvywO5TO+Ib6fqhpXKXP/kr54nseRS+ampvVLeUsu/u3wu7+rbC6tV76/5uyuLDcW1xY7q1urYfVrfWJnA+a5EVTc1U8IWaiWY12m3NCrD4n6JyyZ2Ja77z1ae/RRx4ufIcbv/0RHD+bx58/fzWEEMK5c8+l3k4er3JgWMFnZckRHz7SbqscGFYQDspcyi6/9J7PjpA+If11+7pWwLCCcCAcCAfCgXAgHAgHwoFwgHAgHAgHwoFwIBwIB8KBcCAcIBzka+3dvJr50YSTz3+We+fvvnml0JN4nNl8HJWD7Mrx9FOv+lAT5hwIB8KBcCAcCAfCgXAgHAgHCAfFtHo/dpxbQeVgONGX1z685wfd7s3Qbj808gO6f33ur3JgWEE4EA6EA+FAOBAOhAPhQDhAOBAOhAPhQDgQDoQD4UA4EA448C8xBdnqFl+XiAAAAABJRU5ErkJggg==", "bus": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAABv0lEQVR42u3bsUrDQBwH4Gtxc3MQQeqig5O4CT6Ak4OgIFKkDyAo1EG6KLp0E/QNioug4uDmAwhu0qmDLoogDm7OdVCKHWoSjbRpv29KSbjcXX78kx5JCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwz3JZ6uzL23vTJetsbGQ41euZF4z+kfYc5U0pwkFiQ1nsdPX2KfKYu8ZDa/u+ehSmKltt+2enJ1vb56XNsFI7jmwzreOS9C1Oe5W5gsqB2wrCgXAgHAgHwgHCgXAgHISBXz6Ps1y8+m2JOqqNSuMy3nlTOi5J35KcV+VAOBAOhAPhIHjBuAse52e8QxrDxE09p3IQrHMQS+F08at01D1zoHK0nBV3ftx/uF+L1U55r9TT4/z1OK78W0Hl+JuTi4O23+vLu8bRz+Eori2lUo6j2snKbaXTOLY3BjAcUR8Jj48uNLvxsXHaemkcmfrKPo1JfX69zhmHB1IAAAAAAAAAAAAAAAAAAAAAAAAAAODTB7USXGj/ha4+AAAAAElFTkSuQmCC", "stall": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAADoklEQVR42u3bQWgcVRwH4P+IpR5aGjBoQYxCg21TswdREGswVoi5SEVCoBWtVNCIB9umBk89FA9haTUexPYi5qAF6UFzkBqwtsStFvWSaFrFIkQEIxEW9KCEsB7KbnfN7HZXJJnI91123ps3kyXvl/fmzUwiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhpSXlj7oFcKa3B7Z9Oph7408N9kaX2yfrNie78b93gV4BwIBwIB8KBcJDtcHRcmF62FOy4MJ2kLRGT9ZuT1Wqf2zFqGbtaujsPlLo7D5R8P0wr1HVjvR233dLX0l/nz79OJitxDBkIR0TEpeN/VLY/6ToVj8zuWbYdEbF9eENl+/Dkkbrn6//+/Thz12BERBzrO1qpb99zIrX921O7Y3/Ph5XywqkhPZa1aWVsYilmRgcr5ZnRwRibWGrpB80f3Bvjb33QsM3JQxtbqmeVwzE2sRRbOtojIuLZ/I815WYDMn9wb1xZWKwZQZoNiGBkdFopuzK30LB8vWBERGxpXxe3vv7e1REkIiK2LWv7/Gu/x8lDG68FYupaPRkLx7qBM/HyQBNnGR5oOGJUB6NcrqcchPO7n444tikeEozsTiuzO3fWfNara2bEqC7Xky/2Rr7YGxfH5+Li+Fzki716KYvhWDzdH12FQkRE5bN6u6tQiMXT/Q2vMapHjHK5UTC2vXEptZ4MjhxpnX+9ffteeLzlEaPs8kvbK9tpQSFjS9m0ENQLxtDWXMMRY2hrrtKmnnIoqoNCRlcrERGffzVbU763Qds7H3s1hiIiPvomdf+J76ZT60fazkW+2LssFCNt5/RU1sJRfecz4p93PjekHtN5x0DLX6L6zuf+lCVuhDujsRaeepb++qXUTF2zvr6nu9RqvaeysbL/mlAdjoiImR/GkoiI42+++686YvjFJxu+Y1E8+2ApIqJt12dJK/U9z12d0Mrfj1UMR0TE2akvWgrIrp77G3bcx/s6as736Phc0kr94cITwuF9DoQD4WCNXnOUvsytyRVAct+0aw8jB8JBdpeym+5+pXTTzTtSG//527eRlX3z558ynRg5EA6EA+FAOBAOhAOEA+FAOBAOhAPhQDiI/9Ej+yMj76ypN8KO5p/x6N7IAQAAAAAAANn1N1jAQMjeVyuqAAAAAElFTkSuQmCC", "ojol": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAAB+0lEQVR42u3av0tbURQA4POkIFSw1CENxHYSChnUVf8A54JdzejSP0BwqGi3Tl1Kd91KhS5dOnR0bwsF4U2ppepSpCh0ul0EI6nmJX1ifnzf9h6PO9x7OOfck0QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAwyWxB/0t/DtO1hzhevZFzHLP1CA66dscWDKbphw2ZA2UFZYVezL990fbu4Pt2623FVXYUze08u/Ia+3nldaasoKyMqpmNp0lwcKWJmQdt707zozA+lzlSN0FTRBn9iJ5jCL35+Tv2XjaS4EDPQfHSsRgRtcpSqlWWLmWPH8cfM5kDmYN2zcXZ82xxGI/2vmR6Dq6VmuspNdeTzDGA8s13WS/j8zDnGC2tTeTUZL3j91/zV9m/y0ooK2hI6diACo6h1zqLmJqsJ5lDn1F6ECzk1ahVqqlIEAqOAfSh8in8hxQNKZ3t7G5dPKytlrreyvJzwTEsFvJqTz+aldXDKCuECemA31bKzhxF1pM5kDn6Uf3xkxQRcfLrrOO39+7fLbxu0fW+7b/PNKR9rpuDv431AAAAAAAAgP/wF/L5ZYoUK5I3AAAAAElFTkSuQmCC", "title": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIcAAADwCAYAAAAqwHdzAAACHElEQVR42u3dsVXDMBAA0AuPNWCEdDRZillYioaOEZJBTAEp8CMosi1bkv+vbefy3vkUSfYlAgAAAAAAAAAAAAAAUg4lLz58HIdfH/byeSh1/vjY5BfPuFYrcS/twf1BFclxPh2H8ynvTlny/KnXajVulYNiHtf8sKe3n3E2vjN/zvh5a1y/967KiaXVuFUO+qgcf42fERHP7/OzP/da1ztvyvmtxq1yIDmQHEgOJAdmK7dcXrebs+8xbpWDvtY5rnPyNefse45b5aCvFdLxvsJ4LK9Vq3GrHPRROVJjee1ajVvlQHIgOZAcSA7MVpZaP4gCaw25z272GLfKQR+VY8r6wdS1hhL7Ia3GrXJQV+WYOz7mnF/yN0QrcascAACEzj4x7Y3ypWYRpbvvzI07JxadfQgbb7FdZ6C9dN/R2YfY/QrpePdy/GZZbNQ1KGJeXP/ForMPKkdk7lamutSkjq9l13XJ7js6+2C2guRAciA5oKVnSHXfUTlQOUL3HZUDlaMRe+m+o3Kgcui+o3IgOZAcSA4kB6wzW8l9JyO1FjFnfySn+05uXDnPzursg8oRDf6b5BrrHvfEqbMPKscW42PJ7jtrjus6+wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFTvC/cFlnLMMj48AAAAAElFTkSuQmCC"};
 const titleImages = {};
 const titleReady = Promise.all(Object.entries(TITLE_LAYERS).map(([name, src]) => new Promise(res => {
@@ -729,6 +744,13 @@ function button(scene, x, y, w, h, text, onClick, opts = {}) {
   return b;
 }
 
+// Colour of one square in the solved picture. Puzzles with a detailed look also colour the background.
+function revealColor(p, r, c) {
+  if (p.look) return p.look.pal[p.look.rows[r][c]];
+  const ch = p.art[r][c];
+  return ch === '.' ? p.bg : (p.pal || PAL)[ch];
+}
+
 const MEDALS = { 3: ['#F2C230', '#B98A12'], 2: ['#D5DCE4', '#8C97A3'], 1: ['#D18B4F', '#8E5427'] };
 function medal(scene, x, y, r, rank) {
   const [face, edge] = MEDALS[rank];
@@ -740,14 +762,12 @@ function medal(scene, x, y, r, rank) {
 function artTexture(scene, p) {
   const key = `art-${p.id}`;
   if (scene.textures.exists(key)) return key;
-  const size = p.art.length, colors = p.pal || PAL;
+  const size = p.art.length;
   const tex = scene.textures.createCanvas(key, size, size);
   const ctx = tex.getContext();
-  ctx.fillStyle = p.bg; ctx.fillRect(0, 0, size, size);
-  p.art.forEach((row, r) => [...row].forEach((ch, c) => {
-    if (ch === '.') return;
-    ctx.fillStyle = colors[ch]; ctx.fillRect(c, r, 1, 1);
-  }));
+  for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+    ctx.fillStyle = revealColor(p, r, c); ctx.fillRect(c, r, 1, 1);
+  }
   tex.refresh();
   tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
   return key;
@@ -1022,9 +1042,9 @@ class HomeScene extends Phaser.Scene {
       if (save.medals[p.id]) medal(this, x + w - 44, y + 44, 40, save.medals[p.id]);
       frame.setInteractive({ useHandCursor: true });
       frame.on('pointerup', () => this.scene.start('Play', { puzzle: p, fresh: has }));
-      label(this, x, y + w + 18, has ? p.name : 'Puzzle ' + (start + i + 1), { size: 38, weight: '800', wrap: w });
+      const title = label(this, x, y + w + 18, has ? p.name : 'Puzzle ' + (start + i + 1), { size: 38, weight: '800', wrap: w });
       const note = has ? t('Rekor') + ' ' + fmt(save.best[p.id]) : (save.grids[p.id] ? t('Sedang dimainkan') : `${p.art.length}×${p.art.length}`);
-      label(this, x, y + w + (has && p.name.length > 10 ? 110 : 66), note, { size: 34, color: C.soft, wrap: w });
+      label(this, x, title.y + title.height + 4, note, { size: 34, color: C.soft, wrap: w });
     });
 
     if (this.pageCount > 1) {
@@ -1223,6 +1243,7 @@ class PlayScene extends Phaser.Scene {
   }
   onUp() {
     if (!this.board.stroke) return;
+    if (this.board.stroke.paint === FILL) this.board.autoCross(this.board.stroke.touched);
     this.board.end();
     this.persist();
     this.paint();
@@ -1268,6 +1289,7 @@ class PlayScene extends Phaser.Scene {
     this.board.pushUndo();
     const value = this.board.want(p.r, p.c);
     this.board.grid[p.r][p.c] = value;
+    if (value === FILL) this.board.autoCross([p]);
     sfx[value]();
     this.focus = p;
     this.btn.undo.setEnabled(true);
@@ -1407,7 +1429,7 @@ class PlayScene extends Phaser.Scene {
     for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
       const x = c * cell + cell / 2 - half, y = r * cell + cell / 2 - half, ch = p.art[r][c];
       const under = this.add.rectangle(x, y, cell + 1, cell + 1, hex(grid[r][c] === FILL ? C.filled : C.paper));
-      const top = this.add.rectangle(x, y, cell + 1, cell + 1, hex(ch === '.' ? p.bg : (p.pal || PAL)[ch])).setScale(0);
+      const top = this.add.rectangle(x, y, cell + 1, cell + 1, hex(revealColor(p, r, c))).setScale(0);
       stage.add([under, top]);
       const mid = (N - 1) / 2, d = Math.hypot(r - mid, c - mid) / (mid * 1.42);
       this.tweens.add({ targets: top, scale: 1, delay: d * 550, duration: 280, ease: 'Back.easeOut' });

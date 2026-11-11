@@ -43,6 +43,13 @@ for p in puzzles:
         unknown = sum(v is None for row in result for v in row)
         if unknown:
             problems.append(f'needs guessing ({unknown} squares unresolved)')
+    look = p.get('look')
+    if look:
+        rows = look.get('rows', [])
+        if len(rows) != size or any(len(row) != size for row in rows):
+            problems.append('look is not the same size as the puzzle')
+        elif set(''.join(rows)) - set(look.get('pal', {})):
+            problems.append('look uses a colour with no palette entry')
     if problems:
         failures.append(p['id'])
     print(f"{p['id']:<20} {size}x{size} {'; '.join(problems) or 'ok'}")
