@@ -8,7 +8,7 @@ Made by binjesoft.
 
 ## Features
 
-- 126 solver-checked 10x10 and 15x15 puzzles across 10 categories, from Kuliner to Perayaan
+- 200 solver-checked 10x10 and 15x15 puzzles across 10 categories, from Kuliner to Perayaan
 - Every puzzle has one solution and can be solved by logic, without guessing
 - Drag-to-fill, Isi and Silang tools, undo, and row or column lock
 - Pink highlight when a line can no longer match its numbers
