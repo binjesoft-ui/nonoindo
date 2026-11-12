@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -474,7 +474,7 @@ save.best = save.best || {};
 save.grids = save.grids || {};
 save.medals = save.medals || {};
 save.introSeen = save.introSeen === true || Object.keys(save.best).length > 0 || Object.keys(save.grids).length > 0;
-save.lang = save.lang === 'en' ? 'en' : 'id';
+save.lang = save.lang === 'id' ? 'id' : 'en';
 save.music = save.music !== false;
 save.sfx = save.sfx !== false;
 save.playMusic = save.playMusic === true;
@@ -497,6 +497,7 @@ const I18N = {
 };
 const t = k => (save.lang === 'en' && I18N.en[k]) || k;
 const catName = c => c.name[save.lang] || c.name.id;
+const pText = (p, key) => (save.lang === 'en' && p.en && p.en[key]) || p[key];
 
 // Short sounds made in the browser, so the game needs no audio files.
 const sfx = (() => {
@@ -1042,7 +1043,7 @@ class HomeScene extends Phaser.Scene {
       if (save.medals[p.id]) medal(this, x + w - 44, y + 44, 40, save.medals[p.id]);
       frame.setInteractive({ useHandCursor: true });
       frame.on('pointerup', () => this.scene.start('Play', { puzzle: p, fresh: has }));
-      const title = label(this, x, y + w + 18, has ? p.name : 'Puzzle ' + (start + i + 1), { size: 38, weight: '800', wrap: w });
+      const title = label(this, x, y + w + 18, has ? pText(p, 'name') : 'Puzzle ' + (start + i + 1), { size: 38, weight: '800', wrap: w });
       const note = has ? t('Rekor') + ' ' + fmt(save.best[p.id]) : (save.grids[p.id] ? t('Sedang dimainkan') : `${p.art.length}×${p.art.length}`);
       label(this, x, title.y + title.height + 4, note, { size: 34, color: C.soft, wrap: w });
     });
@@ -1455,8 +1456,8 @@ class PlayScene extends Phaser.Scene {
 
   showResult() {
     const p = this.puzzle, y = BOARD_Y + CONTENT + 36, list = catOf(p.cat).puzzles, idx = list.indexOf(p);
-    label(this, MARGIN, y, p.name, { display: true, size: 74, color: C.yellow, shadow: 5 });
-    label(this, MARGIN, y + 100, p.caption, { size: 46, weight: '700', wrap: CONTENT, lineSpacing: 6 });
+    label(this, MARGIN, y, pText(p, 'name'), { display: true, size: 74, color: C.yellow, shadow: 5 });
+    label(this, MARGIN, y + 100, pText(p, 'caption'), { size: 46, weight: '700', wrap: CONTENT, lineSpacing: 6 });
     label(this, MARGIN, y + 250, this.result, { size: 38, color: C.soft });
     medal(this, VW - MARGIN - 48, y + 272, 46, this.rank);
     label(this, VW - MARGIN - 110, y + 272, t(['', 'Perunggu', 'Perak', 'Emas'][this.rank]), { size: 40, weight: '800', color: C.yellow }).setOrigin(1, 0.5);
